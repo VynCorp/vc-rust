@@ -1,0 +1,26 @@
+[package]
+name = "vynco"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.83"
+license = "Apache-2.0"
+authors = ["VynCo <hello@vynco.ch>"]
+description = "Rust SDK for the VynCo Swiss Corporate Intelligence API"
+repository = "https://github.com/VynCorp/vc-rust"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+[dev-dependencies]
+mockito = "1"
+
+[features]
+default = ["rustls-tls"]
+blocking = []
+rustls-tls = ["reqwest/rustls-tls"]
+native-tls = ["reqwest/native-tls"]
