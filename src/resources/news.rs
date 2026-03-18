@@ -24,11 +24,7 @@ impl<'a> News<'a> {
             Some(l) => {
                 let params = [("limit", l.to_string())];
                 self.client
-                    .request_with_params(
-                        Method::GET,
-                        &format!("/companies/{uid}/news"),
-                        &params,
-                    )
+                    .request_with_params(Method::GET, &format!("/companies/{uid}/news"), &params)
                     .await
             }
             None => {
@@ -40,10 +36,7 @@ impl<'a> News<'a> {
     }
 
     /// Get recent news across all companies.
-    pub async fn recent(
-        &self,
-        limit: Option<u32>,
-    ) -> Result<Response<RecentNewsResponse>> {
+    pub async fn recent(&self, limit: Option<u32>) -> Result<Response<RecentNewsResponse>> {
         match limit {
             Some(l) => {
                 let params = [("limit", l.to_string())];

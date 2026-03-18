@@ -7,6 +7,12 @@ license = "Apache-2.0"
 authors = ["VynCo <hello@vynco.ch>"]
 description = "Rust SDK for the VynCo Swiss Corporate Intelligence API"
 repository = "https://github.com/VynCorp/vc-rust"
+homepage = "https://vynco.ch"
+documentation = "https://docs.rs/vynco"
+readme = "README.md"
+keywords = ["vynco", "swiss", "corporate", "zefix", "sdk"]
+categories = ["api-bindings", "web-programming::http-client"]
+exclude = ["docs/", "CLAUDE.md"]
 
 [dependencies]
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

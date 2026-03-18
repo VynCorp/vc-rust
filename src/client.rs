@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use reqwest::{Method, StatusCode, header};
-use serde::{Serialize, de::DeserializeOwned};
+use reqwest::{header, Method, StatusCode};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::error::{ErrorBody, Result, VyncoError};
 use crate::resources::*;
@@ -194,12 +194,10 @@ impl Client {
     }
 
     /// Send a request that returns no body (e.g. DELETE). Returns only metadata.
-    pub(crate) async fn request_empty(
-        &self,
-        method: Method,
-        path: &str,
-    ) -> Result<ResponseMeta> {
-        let resp = self.execute_raw(self.http.request(method.clone(), self.url(path))).await?;
+    pub(crate) async fn request_empty(&self, method: Method, path: &str) -> Result<ResponseMeta> {
+        let resp = self
+            .execute_raw(self.http.request(method.clone(), self.url(path)))
+            .await?;
         let meta = ResponseMeta::from_headers(resp.headers());
         let status = resp.status();
         if status.is_success() {
@@ -233,10 +231,7 @@ impl Client {
     }
 
     /// Execute a request with retry logic, returning the raw response.
-    async fn execute_raw(
-        &self,
-        builder: reqwest::RequestBuilder,
-    ) -> Result<reqwest::Response> {
+    async fn execute_raw(&self, builder: reqwest::RequestBuilder) -> Result<reqwest::Response> {
         self.execute_with_retry(builder).await
     }
 
@@ -268,9 +263,7 @@ impl Client {
 
                         let delay = retry_after
                             .map(Duration::from_secs)
-                            .unwrap_or_else(|| {
-                                Duration::from_millis(500 * 2u64.pow(attempt))
-                            });
+                            .unwrap_or_else(|| Duration::from_millis(500 * 2u64.pow(attempt)));
 
                         tokio::time::sleep(delay).await;
                         continue;
@@ -320,11 +313,11 @@ impl Client {
 
     /// Extract a list from a flexible JSON response (bare array, `{"data": [...]}`,
     /// or first array-valued key).
-    pub(crate) fn extract_list<T: DeserializeOwned>(
-        value: serde_json::Value,
-    ) -> Result<Vec<T>> {
+    pub(crate) fn extract_list<T: DeserializeOwned>(value: serde_json::Value) -> Result<Vec<T>> {
         if let serde_json::Value::Array(arr) = &value {
-            return Ok(serde_json::from_value(serde_json::Value::Array(arr.clone()))?);
+            return Ok(serde_json::from_value(serde_json::Value::Array(
+                arr.clone(),
+            ))?);
         }
 
         if let serde_json::Value::Object(map) = &value {

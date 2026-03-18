@@ -24,11 +24,7 @@ impl<'a> Reports<'a> {
             Some(l) => {
                 let params = [("limit", l.to_string())];
                 self.client
-                    .request_with_params(
-                        Method::GET,
-                        &format!("/companies/{uid}/reports"),
-                        &params,
-                    )
+                    .request_with_params(Method::GET, &format!("/companies/{uid}/reports"), &params)
                     .await
             }
             None => {

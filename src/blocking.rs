@@ -155,17 +155,13 @@ pub struct Companies<'a> {
 }
 
 impl Companies<'_> {
-    pub fn list(
-        &self,
-        params: &CompanyListParams,
-    ) -> Result<Response<PaginatedResponse<Company>>> {
+    pub fn list(&self, params: &CompanyListParams) -> Result<Response<PaginatedResponse<Company>>> {
         self.client
             .block_on(self.client.inner.companies().list(params))
     }
 
     pub fn get(&self, uid: &str) -> Result<Response<Company>> {
-        self.client
-            .block_on(self.client.inner.companies().get(uid))
+        self.client.block_on(self.client.inner.companies().get(uid))
     }
 
     pub fn count(&self, params: &CompanyCountParams) -> Result<Response<CompanyCount>> {
@@ -205,13 +201,11 @@ impl Persons<'_> {
     }
 
     pub fn get(&self, id: &str) -> Result<Response<Person>> {
-        self.client
-            .block_on(self.client.inner.persons().get(id))
+        self.client.block_on(self.client.inner.persons().get(id))
     }
 
     pub fn roles(&self, id: &str) -> Result<Response<Vec<serde_json::Value>>> {
-        self.client
-            .block_on(self.client.inner.persons().roles(id))
+        self.client.block_on(self.client.inner.persons().roles(id))
     }
 
     pub fn connections(&self, id: &str) -> Result<Response<Vec<serde_json::Value>>> {
@@ -236,20 +230,14 @@ pub struct Dossiers<'a> {
 
 impl Dossiers<'_> {
     pub fn list(&self) -> Result<Response<Vec<Dossier>>> {
-        self.client
-            .block_on(self.client.inner.dossiers().list())
+        self.client.block_on(self.client.inner.dossiers().list())
     }
 
     pub fn get(&self, uid: &str) -> Result<Response<Dossier>> {
-        self.client
-            .block_on(self.client.inner.dossiers().get(uid))
+        self.client.block_on(self.client.inner.dossiers().get(uid))
     }
 
-    pub fn generate(
-        &self,
-        uid: &str,
-        req: &GenerateDossierRequest,
-    ) -> Result<Response<Dossier>> {
+    pub fn generate(&self, uid: &str, req: &GenerateDossierRequest) -> Result<Response<Dossier>> {
         self.client
             .block_on(self.client.inner.dossiers().generate(uid, req))
     }
@@ -298,8 +286,7 @@ impl Changes<'_> {
     }
 
     pub fn batch(&self, req: &BatchChangeRequest) -> Result<Response<Vec<CompanyChange>>> {
-        self.client
-            .block_on(self.client.inner.changes().batch(req))
+        self.client.block_on(self.client.inner.changes().batch(req))
     }
 }
 
@@ -350,8 +337,7 @@ pub struct ApiKeys<'a> {
 
 impl ApiKeys<'_> {
     pub fn list(&self) -> Result<Response<Vec<ApiKey>>> {
-        self.client
-            .block_on(self.client.inner.api_keys().list())
+        self.client.block_on(self.client.inner.api_keys().list())
     }
 
     pub fn create(&self, req: &CreateApiKeyRequest) -> Result<Response<ApiKeyCreated>> {
@@ -371,8 +357,7 @@ pub struct Credits<'a> {
 
 impl Credits<'_> {
     pub fn balance(&self) -> Result<Response<CreditBalance>> {
-        self.client
-            .block_on(self.client.inner.credits().balance())
+        self.client.block_on(self.client.inner.credits().balance())
     }
 
     pub fn usage(&self, since: Option<&str>) -> Result<Response<UsageBreakdown>> {
@@ -412,8 +397,7 @@ pub struct Watches<'a> {
 
 impl Watches<'_> {
     pub fn list(&self) -> Result<Response<Vec<CompanyWatch>>> {
-        self.client
-            .block_on(self.client.inner.watches().list())
+        self.client.block_on(self.client.inner.watches().list())
     }
 
     pub fn create(&self, req: &CreateWatchRequest) -> Result<Response<CompanyWatch>> {
@@ -426,10 +410,7 @@ impl Watches<'_> {
             .block_on(self.client.inner.watches().remove(company_uid))
     }
 
-    pub fn notifications(
-        &self,
-        limit: Option<u32>,
-    ) -> Result<Response<Vec<ChangeNotification>>> {
+    pub fn notifications(&self, limit: Option<u32>) -> Result<Response<Vec<ChangeNotification>>> {
         self.client
             .block_on(self.client.inner.watches().notifications(limit))
     }
@@ -450,8 +431,7 @@ impl News<'_> {
     }
 
     pub fn recent(&self, limit: Option<u32>) -> Result<Response<RecentNewsResponse>> {
-        self.client
-            .block_on(self.client.inner.news().recent(limit))
+        self.client.block_on(self.client.inner.news().recent(limit))
     }
 }
 
@@ -496,13 +476,11 @@ impl Teams<'_> {
     }
 
     pub fn create(&self, req: &CreateTeamRequest) -> Result<Response<Team>> {
-        self.client
-            .block_on(self.client.inner.teams().create(req))
+        self.client.block_on(self.client.inner.teams().create(req))
     }
 
     pub fn members(&self) -> Result<Response<Vec<TeamMember>>> {
-        self.client
-            .block_on(self.client.inner.teams().members())
+        self.client.block_on(self.client.inner.teams().members())
     }
 
     pub fn invite_member(&self, req: &InviteMemberRequest) -> Result<Response<TeamMember>> {
@@ -536,7 +514,6 @@ pub struct Health<'a> {
 
 impl Health<'_> {
     pub fn check(&self) -> Result<Response<HealthResponse>> {
-        self.client
-            .block_on(self.client.inner.health().check())
+        self.client.block_on(self.client.inner.health().check())
     }
 }

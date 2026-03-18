@@ -40,10 +40,7 @@ impl<'a> Teams<'a> {
     }
 
     /// Invite a new team member.
-    pub async fn invite_member(
-        &self,
-        req: &InviteMemberRequest,
-    ) -> Result<Response<TeamMember>> {
+    pub async fn invite_member(&self, req: &InviteMemberRequest) -> Result<Response<TeamMember>> {
         self.client
             .request_with_body(Method::POST, "/teams/me/members", req)
             .await

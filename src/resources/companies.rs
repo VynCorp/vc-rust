@@ -65,10 +65,7 @@ impl<'a> Companies<'a> {
     }
 
     /// Get the count of companies matching optional filters.
-    pub async fn count(
-        &self,
-        params: &CompanyCountParams,
-    ) -> Result<Response<CompanyCount>> {
+    pub async fn count(&self, params: &CompanyCountParams) -> Result<Response<CompanyCount>> {
         let mut query: Vec<(&str, String)> = Vec::new();
         if let Some(ref c) = params.canton {
             query.push(("canton", c.clone()));
@@ -97,10 +94,7 @@ impl<'a> Companies<'a> {
     }
 
     /// Full-text search companies (FTS5).
-    pub async fn search(
-        &self,
-        req: &CompanySearchRequest,
-    ) -> Result<Response<Vec<Company>>> {
+    pub async fn search(&self, req: &CompanySearchRequest) -> Result<Response<Vec<Company>>> {
         let resp: Response<serde_json::Value> = self
             .client
             .request_with_body(Method::POST, "/companies/search", req)
@@ -113,10 +107,7 @@ impl<'a> Companies<'a> {
     }
 
     /// Batch lookup up to 50 companies by UID.
-    pub async fn batch(
-        &self,
-        req: &BatchCompanyRequest,
-    ) -> Result<Response<Vec<Company>>> {
+    pub async fn batch(&self, req: &BatchCompanyRequest) -> Result<Response<Vec<Company>>> {
         let resp: Response<serde_json::Value> = self
             .client
             .request_with_body(Method::POST, "/companies/batch", req)

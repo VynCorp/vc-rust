@@ -84,10 +84,7 @@ impl<'a> Changes<'a> {
     }
 
     /// Batch fetch changes for multiple companies.
-    pub async fn batch(
-        &self,
-        req: &BatchChangeRequest,
-    ) -> Result<Response<Vec<CompanyChange>>> {
+    pub async fn batch(&self, req: &BatchChangeRequest) -> Result<Response<Vec<CompanyChange>>> {
         let resp: Response<serde_json::Value> = self
             .client
             .request_with_body(Method::POST, "/changes/batch", req)

@@ -26,10 +26,7 @@ impl<'a> Watches<'a> {
     }
 
     /// Add a company watch.
-    pub async fn create(
-        &self,
-        req: &CreateWatchRequest,
-    ) -> Result<Response<CompanyWatch>> {
+    pub async fn create(&self, req: &CreateWatchRequest) -> Result<Response<CompanyWatch>> {
         self.client
             .request_with_body(Method::POST, "/watches", req)
             .await
@@ -54,11 +51,7 @@ impl<'a> Watches<'a> {
                     .request_with_params(Method::GET, "/notifications", &params)
                     .await?
             }
-            None => {
-                self.client
-                    .request(Method::GET, "/notifications")
-                    .await?
-            }
+            None => self.client.request(Method::GET, "/notifications").await?,
         };
         let data = Client::extract_list(resp.data)?;
         Ok(Response {

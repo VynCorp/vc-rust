@@ -1,4 +1,7 @@
-use vynco::{Client, CompanyListParams, CompanySearchRequest, CreateApiKeyRequest, GenerateDossierRequest, VyncoError};
+use vynco::{
+    Client, CompanyListParams, CompanySearchRequest, CreateApiKeyRequest, GenerateDossierRequest,
+    VyncoError,
+};
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -202,11 +205,7 @@ async fn conflict_returns_conflict_error() {
         name: None,
         invited_by: None,
     };
-    let err = client
-        .teams()
-        .invite_member(&req)
-        .await
-        .unwrap_err();
+    let err = client.teams().invite_member(&req).await.unwrap_err();
     match err {
         VyncoError::Conflict(body) => assert_eq!(body.detail, "Already a member"),
         other => panic!("expected Conflict, got: {other}"),
@@ -233,7 +232,10 @@ async fn company_list_parses_paginated_response() {
         .with_header("X-Credits-Used", "1")
         .with_header("X-Credits-Remaining", "499")
         .with_header("X-Rate-Limit-Limit", "60")
-        .with_header("X-Data-Source", "Zefix / Federal Commercial Registry Office (EHRA)")
+        .with_header(
+            "X-Data-Source",
+            "Zefix / Federal Commercial Registry Office (EHRA)",
+        )
         .with_body(
             r#"{
                 "items": [
@@ -554,7 +556,10 @@ async fn response_meta_parsed_from_headers() {
         .with_header("X-Rate-Limit-Limit", "300")
         .with_header("X-RateLimit-Remaining", "295")
         .with_header("X-RateLimit-Reset", "1742310000")
-        .with_header("X-Data-Source", "Zefix / Federal Commercial Registry Office (EHRA)")
+        .with_header(
+            "X-Data-Source",
+            "Zefix / Federal Commercial Registry Office (EHRA)",
+        )
         .with_body(
             r#"{
                 "id": "team_001",

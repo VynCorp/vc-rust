@@ -15,20 +15,14 @@ impl<'a> Relationships<'a> {
     }
 
     /// Get company relationships (parent, subsidiaries, board overlaps).
-    pub async fn for_company(
-        &self,
-        uid: &str,
-    ) -> Result<Response<RelationshipResponse>> {
+    pub async fn for_company(&self, uid: &str) -> Result<Response<RelationshipResponse>> {
         self.client
             .request(Method::GET, &format!("/companies/{uid}/relationships"))
             .await
     }
 
     /// Get corporate hierarchy (full recursive parent/subsidiary tree).
-    pub async fn hierarchy(
-        &self,
-        uid: &str,
-    ) -> Result<Response<RelationshipResponse>> {
+    pub async fn hierarchy(&self, uid: &str) -> Result<Response<RelationshipResponse>> {
         self.client
             .request(Method::GET, &format!("/companies/{uid}/hierarchy"))
             .await
