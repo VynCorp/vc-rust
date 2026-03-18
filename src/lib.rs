@@ -12,6 +12,7 @@ pub use client::{Client, ClientBuilder};
 pub use error::{ErrorBody, VyncoError};
 pub use response::{Response, ResponseMeta};
 pub use resources::{
-    ApiKeys, Billing, Companies, Credits, Dossiers, Persons, Settings, Teams, Users, Webhooks,
+    Analytics, ApiKeys, Billing, Changes, Companies, Credits, Dossiers,
+    Health, News, Persons, Relationships, Reports, Teams, Watches,
 };
 pub use types::*;

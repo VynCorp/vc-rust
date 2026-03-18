@@ -17,21 +17,21 @@ impl<'a> Billing<'a> {
     /// Create a Stripe checkout session for upgrading to a tier.
     pub async fn create_checkout(
         &self,
-        tier: &str,
-    ) -> Result<Response<CheckoutSessionResponse>> {
-        #[derive(serde::Serialize)]
-        struct Body<'a> {
-            tier: &'a str,
-        }
+        req: &CheckoutRequest,
+    ) -> Result<Response<SessionUrlResponse>> {
         self.client
-            .request_with_body(Method::POST, "/billing/checkout", &Body { tier })
+            .request_with_body(Method::POST, "/billing/checkout-session", req)
             .await
     }
 
     /// Create a Stripe billing portal session for managing the subscription.
-    pub async fn create_portal(&self) -> Result<Response<PortalSessionResponse>> {
+    pub async fn create_portal(&self) -> Result<Response<SessionUrlResponse>> {
         self.client
-            .request_with_body(Method::POST, "/billing/portal", &serde_json::json!({}))
+            .request_with_body(
+                Method::POST,
+                "/billing/portal-session",
+                &serde_json::json!({}),
+            )
             .await
     }
 }

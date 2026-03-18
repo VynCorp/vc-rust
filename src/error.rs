@@ -5,6 +5,10 @@ use serde::Deserialize;
 /// RFC 7807 Problem Details error body returned by the VynCo API.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ErrorBody {
+    #[serde(default, rename = "type")]
+    pub error_type: String,
+    #[serde(default)]
+    pub title: String,
     #[serde(default)]
     pub detail: String,
     #[serde(default)]
@@ -42,6 +46,9 @@ pub enum VyncoError {
 
     #[error("validation error: {0}")]
     Validation(ErrorBody),
+
+    #[error("conflict: {0}")]
+    Conflict(ErrorBody),
 
     #[error("rate limited: {0}")]
     RateLimit(ErrorBody),

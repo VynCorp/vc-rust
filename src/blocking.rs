@@ -101,6 +101,14 @@ impl Client {
         Dossiers { client: self }
     }
 
+    pub fn changes(&self) -> Changes<'_> {
+        Changes { client: self }
+    }
+
+    pub fn analytics(&self) -> Analytics<'_> {
+        Analytics { client: self }
+    }
+
     pub fn api_keys(&self) -> ApiKeys<'_> {
         ApiKeys { client: self }
     }
@@ -113,20 +121,28 @@ impl Client {
         Billing { client: self }
     }
 
-    pub fn webhooks(&self) -> Webhooks<'_> {
-        Webhooks { client: self }
+    pub fn watches(&self) -> Watches<'_> {
+        Watches { client: self }
+    }
+
+    pub fn news(&self) -> News<'_> {
+        News { client: self }
+    }
+
+    pub fn reports(&self) -> Reports<'_> {
+        Reports { client: self }
+    }
+
+    pub fn relationships(&self) -> Relationships<'_> {
+        Relationships { client: self }
     }
 
     pub fn teams(&self) -> Teams<'_> {
         Teams { client: self }
     }
 
-    pub fn users(&self) -> Users<'_> {
-        Users { client: self }
-    }
-
-    pub fn settings(&self) -> Settings<'_> {
-        Settings { client: self }
+    pub fn health(&self) -> Health<'_> {
+        Health { client: self }
     }
 }
 
@@ -139,12 +155,12 @@ pub struct Companies<'a> {
 }
 
 impl Companies<'_> {
-    pub fn search(
+    pub fn list(
         &self,
-        params: &CompanySearchParams,
+        params: &CompanyListParams,
     ) -> Result<Response<PaginatedResponse<Company>>> {
         self.client
-            .block_on(self.client.inner.companies().search(params))
+            .block_on(self.client.inner.companies().list(params))
     }
 
     pub fn get(&self, uid: &str) -> Result<Response<Company>> {
@@ -152,29 +168,29 @@ impl Companies<'_> {
             .block_on(self.client.inner.companies().get(uid))
     }
 
-    pub fn count(&self, params: &CompanySearchParams) -> Result<Response<CompanyCount>> {
+    pub fn count(&self, params: &CompanyCountParams) -> Result<Response<CompanyCount>> {
         self.client
             .block_on(self.client.inner.companies().count(params))
     }
 
-    pub fn statistics(&self) -> Result<Response<serde_json::Value>> {
+    pub fn statistics(&self) -> Result<Response<CompanyStatistics>> {
         self.client
             .block_on(self.client.inner.companies().statistics())
     }
 
-    pub fn changes(&self, uid: &str) -> Result<Response<Vec<CompanyChange>>> {
+    pub fn search(&self, req: &CompanySearchRequest) -> Result<Response<Vec<Company>>> {
         self.client
-            .block_on(self.client.inner.companies().changes(uid))
+            .block_on(self.client.inner.companies().search(req))
     }
 
-    pub fn persons(&self, uid: &str) -> Result<Response<Vec<PersonRole>>> {
+    pub fn batch(&self, req: &BatchCompanyRequest) -> Result<Response<Vec<Company>>> {
         self.client
-            .block_on(self.client.inner.companies().persons(uid))
+            .block_on(self.client.inner.companies().batch(req))
     }
 
-    pub fn dossier(&self, uid: &str) -> Result<Response<Dossier>> {
+    pub fn compare(&self, req: &CompareCompaniesRequest) -> Result<Response<serde_json::Value>> {
         self.client
-            .block_on(self.client.inner.companies().dossier(uid))
+            .block_on(self.client.inner.companies().compare(req))
     }
 }
 
@@ -183,14 +199,34 @@ pub struct Persons<'a> {
 }
 
 impl Persons<'_> {
+    pub fn list(&self, params: &PersonListParams) -> Result<Response<Vec<Person>>> {
+        self.client
+            .block_on(self.client.inner.persons().list(params))
+    }
+
     pub fn get(&self, id: &str) -> Result<Response<Person>> {
         self.client
             .block_on(self.client.inner.persons().get(id))
     }
 
-    pub fn search(&self, params: &PersonSearchParams) -> Result<Response<Vec<Person>>> {
+    pub fn roles(&self, id: &str) -> Result<Response<Vec<serde_json::Value>>> {
         self.client
-            .block_on(self.client.inner.persons().search(params))
+            .block_on(self.client.inner.persons().roles(id))
+    }
+
+    pub fn connections(&self, id: &str) -> Result<Response<Vec<serde_json::Value>>> {
+        self.client
+            .block_on(self.client.inner.persons().connections(id))
+    }
+
+    pub fn board_members(&self, uid: &str) -> Result<Response<Vec<Person>>> {
+        self.client
+            .block_on(self.client.inner.persons().board_members(uid))
+    }
+
+    pub fn network_stats(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.persons().network_stats())
     }
 }
 
@@ -199,6 +235,16 @@ pub struct Dossiers<'a> {
 }
 
 impl Dossiers<'_> {
+    pub fn list(&self) -> Result<Response<Vec<Dossier>>> {
+        self.client
+            .block_on(self.client.inner.dossiers().list())
+    }
+
+    pub fn get(&self, uid: &str) -> Result<Response<Dossier>> {
+        self.client
+            .block_on(self.client.inner.dossiers().get(uid))
+    }
+
     pub fn generate(
         &self,
         uid: &str,
@@ -207,6 +253,95 @@ impl Dossiers<'_> {
         self.client
             .block_on(self.client.inner.dossiers().generate(uid, req))
     }
+
+    pub fn statistics(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.dossiers().statistics())
+    }
+}
+
+pub struct Changes<'a> {
+    client: &'a Client,
+}
+
+impl Changes<'_> {
+    pub fn list(
+        &self,
+        params: &ChangeListParams,
+    ) -> Result<Response<PaginatedResponse<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().list(params))
+    }
+
+    pub fn by_company(&self, uid: &str) -> Result<Response<Vec<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().by_company(uid))
+    }
+
+    pub fn statistics(&self) -> Result<Response<ChangeStatistics>> {
+        self.client
+            .block_on(self.client.inner.changes().statistics())
+    }
+
+    pub fn by_sogc(&self, sogc_id: &str) -> Result<Response<Vec<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().by_sogc(sogc_id))
+    }
+
+    pub fn review(
+        &self,
+        id: &str,
+        req: &ReviewChangeRequest,
+    ) -> Result<Response<ReviewChangeResponse>> {
+        self.client
+            .block_on(self.client.inner.changes().review(id, req))
+    }
+
+    pub fn batch(&self, req: &BatchChangeRequest) -> Result<Response<Vec<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().batch(req))
+    }
+}
+
+pub struct Analytics<'a> {
+    client: &'a Client,
+}
+
+impl Analytics<'_> {
+    pub fn cluster(&self, req: &ClusterRequest) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().cluster(req))
+    }
+
+    pub fn anomalies(&self, req: &AnomalyRequest) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().anomalies(req))
+    }
+
+    pub fn cohorts(&self, params: &CohortParams) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().cohorts(params))
+    }
+
+    pub fn cantons(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().cantons())
+    }
+
+    pub fn auditors(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().auditors())
+    }
+
+    pub fn rfm_segments(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().rfm_segments())
+    }
+
+    pub fn velocity(&self, days: Option<u32>) -> Result<Response<serde_json::Value>> {
+        self.client
+            .block_on(self.client.inner.analytics().velocity(days))
+    }
 }
 
 pub struct ApiKeys<'a> {
@@ -214,7 +349,7 @@ pub struct ApiKeys<'a> {
 }
 
 impl ApiKeys<'_> {
-    pub fn list(&self) -> Result<Response<Vec<ApiKeyInfo>>> {
+    pub fn list(&self) -> Result<Response<Vec<ApiKey>>> {
         self.client
             .block_on(self.client.inner.api_keys().list())
     }
@@ -249,7 +384,7 @@ impl Credits<'_> {
         &self,
         limit: Option<u32>,
         offset: Option<u32>,
-    ) -> Result<Response<serde_json::Value>> {
+    ) -> Result<Response<Vec<CreditLedgerEntry>>> {
         self.client
             .block_on(self.client.inner.credits().history(limit, offset))
     }
@@ -260,54 +395,94 @@ pub struct Billing<'a> {
 }
 
 impl Billing<'_> {
-    pub fn create_checkout(&self, tier: &str) -> Result<Response<CheckoutSessionResponse>> {
+    pub fn create_checkout(&self, req: &CheckoutRequest) -> Result<Response<SessionUrlResponse>> {
         self.client
-            .block_on(self.client.inner.billing().create_checkout(tier))
+            .block_on(self.client.inner.billing().create_checkout(req))
     }
 
-    pub fn create_portal(&self) -> Result<Response<PortalSessionResponse>> {
+    pub fn create_portal(&self) -> Result<Response<SessionUrlResponse>> {
         self.client
             .block_on(self.client.inner.billing().create_portal())
     }
 }
 
-pub struct Webhooks<'a> {
+pub struct Watches<'a> {
     client: &'a Client,
 }
 
-impl Webhooks<'_> {
-    pub fn list(&self) -> Result<Response<Vec<Webhook>>> {
+impl Watches<'_> {
+    pub fn list(&self) -> Result<Response<Vec<CompanyWatch>>> {
         self.client
-            .block_on(self.client.inner.webhooks().list())
+            .block_on(self.client.inner.watches().list())
     }
 
-    pub fn create(&self, req: &CreateWebhookRequest) -> Result<Response<WebhookCreated>> {
+    pub fn create(&self, req: &CreateWatchRequest) -> Result<Response<CompanyWatch>> {
         self.client
-            .block_on(self.client.inner.webhooks().create(req))
+            .block_on(self.client.inner.watches().create(req))
     }
 
-    pub fn get(&self, id: &str) -> Result<Response<Webhook>> {
+    pub fn remove(&self, company_uid: &str) -> Result<ResponseMeta> {
         self.client
-            .block_on(self.client.inner.webhooks().get(id))
+            .block_on(self.client.inner.watches().remove(company_uid))
     }
 
-    pub fn update(
+    pub fn notifications(
         &self,
-        id: &str,
-        req: &UpdateWebhookRequest,
-    ) -> Result<Response<Webhook>> {
+        limit: Option<u32>,
+    ) -> Result<Response<Vec<ChangeNotification>>> {
         self.client
-            .block_on(self.client.inner.webhooks().update(id, req))
+            .block_on(self.client.inner.watches().notifications(limit))
+    }
+}
+
+pub struct News<'a> {
+    client: &'a Client,
+}
+
+impl News<'_> {
+    pub fn for_company(
+        &self,
+        uid: &str,
+        limit: Option<u32>,
+    ) -> Result<Response<CompanyNewsResponse>> {
+        self.client
+            .block_on(self.client.inner.news().for_company(uid, limit))
     }
 
-    pub fn delete(&self, id: &str) -> Result<ResponseMeta> {
+    pub fn recent(&self, limit: Option<u32>) -> Result<Response<RecentNewsResponse>> {
         self.client
-            .block_on(self.client.inner.webhooks().delete(id))
+            .block_on(self.client.inner.news().recent(limit))
+    }
+}
+
+pub struct Reports<'a> {
+    client: &'a Client,
+}
+
+impl Reports<'_> {
+    pub fn for_company(
+        &self,
+        uid: &str,
+        limit: Option<u32>,
+    ) -> Result<Response<CompanyReportsResponse>> {
+        self.client
+            .block_on(self.client.inner.reports().for_company(uid, limit))
+    }
+}
+
+pub struct Relationships<'a> {
+    client: &'a Client,
+}
+
+impl Relationships<'_> {
+    pub fn for_company(&self, uid: &str) -> Result<Response<RelationshipResponse>> {
+        self.client
+            .block_on(self.client.inner.relationships().for_company(uid))
     }
 
-    pub fn test(&self, id: &str) -> Result<ResponseMeta> {
+    pub fn hierarchy(&self, uid: &str) -> Result<Response<RelationshipResponse>> {
         self.client
-            .block_on(self.client.inner.webhooks().test(id))
+            .block_on(self.client.inner.relationships().hierarchy(uid))
     }
 }
 
@@ -324,35 +499,44 @@ impl Teams<'_> {
         self.client
             .block_on(self.client.inner.teams().create(req))
     }
+
+    pub fn members(&self) -> Result<Response<Vec<TeamMember>>> {
+        self.client
+            .block_on(self.client.inner.teams().members())
+    }
+
+    pub fn invite_member(&self, req: &InviteMemberRequest) -> Result<Response<TeamMember>> {
+        self.client
+            .block_on(self.client.inner.teams().invite_member(req))
+    }
+
+    pub fn update_member_role(
+        &self,
+        id: &str,
+        req: &UpdateMemberRoleRequest,
+    ) -> Result<Response<TeamMember>> {
+        self.client
+            .block_on(self.client.inner.teams().update_member_role(id, req))
+    }
+
+    pub fn remove_member(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.teams().remove_member(id))
+    }
+
+    pub fn billing_summary(&self) -> Result<Response<BillingSummary>> {
+        self.client
+            .block_on(self.client.inner.teams().billing_summary())
+    }
 }
 
-pub struct Users<'a> {
+pub struct Health<'a> {
     client: &'a Client,
 }
 
-impl Users<'_> {
-    pub fn me(&self) -> Result<Response<UserProfile>> {
-        self.client.block_on(self.client.inner.users().me())
-    }
-
-    pub fn update_profile(&self, req: &UpdateProfileRequest) -> Result<Response<UserProfile>> {
+impl Health<'_> {
+    pub fn check(&self) -> Result<Response<HealthResponse>> {
         self.client
-            .block_on(self.client.inner.users().update_profile(req))
-    }
-}
-
-pub struct Settings<'a> {
-    client: &'a Client,
-}
-
-impl Settings<'_> {
-    pub fn get(&self) -> Result<Response<serde_json::Value>> {
-        self.client
-            .block_on(self.client.inner.settings().get())
-    }
-
-    pub fn update(&self, preferences: &serde_json::Value) -> Result<Response<serde_json::Value>> {
-        self.client
-            .block_on(self.client.inner.settings().update(preferences))
+            .block_on(self.client.inner.health().check())
     }
 }

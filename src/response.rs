@@ -9,7 +9,11 @@ pub struct ResponseMeta {
     pub credits_remaining: Option<i64>,
     /// Maximum requests per minute for the current tier (`X-Rate-Limit-Limit`).
     pub rate_limit_limit: Option<u32>,
-    /// Data source for OGD compliance (`X-Data-Source`): "Zefix" or "LINDAS".
+    /// Remaining requests in the current rate limit window (`X-RateLimit-Remaining`).
+    pub rate_limit_remaining: Option<u32>,
+    /// Unix timestamp when the rate limit window resets (`X-RateLimit-Reset`).
+    pub rate_limit_reset: Option<u64>,
+    /// Data source attribution (`X-Data-Source`).
     pub data_source: Option<String>,
 }
 
@@ -37,6 +41,14 @@ impl ResponseMeta {
                 .and_then(|v| v.parse().ok()),
             rate_limit_limit: headers
                 .get("X-Rate-Limit-Limit")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse().ok()),
+            rate_limit_remaining: headers
+                .get("X-RateLimit-Remaining")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse().ok()),
+            rate_limit_reset: headers
+                .get("X-RateLimit-Reset")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|v| v.parse().ok()),
             data_source: headers

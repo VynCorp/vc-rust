@@ -14,26 +14,41 @@ impl<'a> Dossiers<'a> {
         Self { client }
     }
 
+    /// List all generated dossiers.
+    pub async fn list(&self) -> Result<Response<Vec<Dossier>>> {
+        let resp: Response<serde_json::Value> =
+            self.client.request(Method::GET, "/dossiers").await?;
+        let data = Client::extract_list(resp.data)?;
+        Ok(Response {
+            data,
+            meta: resp.meta,
+        })
+    }
+
+    /// Get the most recent dossier for a company.
+    pub async fn get(&self, uid: &str) -> Result<Response<Dossier>> {
+        self.client
+            .request(Method::GET, &format!("/dossiers/{uid}"))
+            .await
+    }
+
     /// Generate an AI dossier for a company.
     ///
-    /// Levels: "summary" (20 credits), "standard" (50 credits),
-    /// "comprehensive" (100 credits).
+    /// Types: "standard" (40 credits) or "comprehensive" (100 credits).
     pub async fn generate(
         &self,
         uid: &str,
         req: &GenerateDossierRequest,
     ) -> Result<Response<Dossier>> {
-        #[derive(serde::Serialize)]
-        struct Body<'a> {
-            uid: &'a str,
-            level: &'a str,
-        }
-        let body = Body {
-            uid,
-            level: &req.level,
-        };
         self.client
-            .request_with_body(Method::POST, "/dossiers", &body)
+            .request_with_body(Method::POST, &format!("/dossiers/{uid}/generate"), req)
+            .await
+    }
+
+    /// Get dossier generation statistics.
+    pub async fn statistics(&self) -> Result<Response<serde_json::Value>> {
+        self.client
+            .request(Method::GET, "/dossiers/statistics")
             .await
     }
 }

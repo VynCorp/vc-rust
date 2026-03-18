@@ -14,23 +14,29 @@ impl<'a> Companies<'a> {
         Self { client }
     }
 
-    /// Search companies with filters and pagination.
-    pub async fn search(
+    /// List companies with optional filtering and pagination.
+    pub async fn list(
         &self,
-        params: &CompanySearchParams,
+        params: &CompanyListParams,
     ) -> Result<Response<PaginatedResponse<Company>>> {
         let mut query: Vec<(&str, String)> = Vec::new();
-        if let Some(ref s) = params.search {
-            query.push(("search", s.clone()));
+        if let Some(p) = params.page {
+            query.push(("page", p.to_string()));
+        }
+        if let Some(ps) = params.page_size {
+            query.push(("pageSize", ps.to_string()));
         }
         if let Some(ref c) = params.canton {
             query.push(("canton", c.clone()));
         }
-        if let Some(ref lf) = params.legal_form {
-            query.push(("legalForm", lf.clone()));
+        if let Some(ref s) = params.search {
+            query.push(("search", s.clone()));
         }
         if let Some(ref st) = params.status {
             query.push(("status", st.clone()));
+        }
+        if let Some(ref ac) = params.auditor_category {
+            query.push(("auditorCategory", ac.clone()));
         }
         if let Some(ref sb) = params.sort_by {
             query.push(("sortBy", sb.clone()));
@@ -38,11 +44,8 @@ impl<'a> Companies<'a> {
         if let Some(sd) = params.sort_desc {
             query.push(("sortDesc", sd.to_string()));
         }
-        if let Some(p) = params.page {
-            query.push(("page", p.to_string()));
-        }
-        if let Some(ps) = params.page_size {
-            query.push(("pageSize", ps.to_string()));
+        if let Some(ref ts) = params.target_status {
+            query.push(("targetStatus", ts.clone()));
         }
 
         if query.is_empty() {
@@ -61,23 +64,20 @@ impl<'a> Companies<'a> {
             .await
     }
 
-    /// Get the total count of companies matching optional filters.
+    /// Get the count of companies matching optional filters.
     pub async fn count(
         &self,
-        params: &CompanySearchParams,
+        params: &CompanyCountParams,
     ) -> Result<Response<CompanyCount>> {
         let mut query: Vec<(&str, String)> = Vec::new();
-        if let Some(ref s) = params.search {
-            query.push(("search", s.clone()));
-        }
         if let Some(ref c) = params.canton {
             query.push(("canton", c.clone()));
         }
-        if let Some(ref lf) = params.legal_form {
-            query.push(("legalForm", lf.clone()));
+        if let Some(ref s) = params.status {
+            query.push(("status", s.clone()));
         }
-        if let Some(ref st) = params.status {
-            query.push(("status", st.clone()));
+        if let Some(ref ac) = params.auditor_category {
+            query.push(("auditorCategory", ac.clone()));
         }
 
         if query.is_empty() {
@@ -90,17 +90,20 @@ impl<'a> Companies<'a> {
     }
 
     /// Get aggregate statistics about companies.
-    pub async fn statistics(&self) -> Result<Response<serde_json::Value>> {
+    pub async fn statistics(&self) -> Result<Response<CompanyStatistics>> {
         self.client
             .request(Method::GET, "/companies/statistics")
             .await
     }
 
-    /// Get the change history for a specific company.
-    pub async fn changes(&self, uid: &str) -> Result<Response<Vec<CompanyChange>>> {
+    /// Full-text search companies (FTS5).
+    pub async fn search(
+        &self,
+        req: &CompanySearchRequest,
+    ) -> Result<Response<Vec<Company>>> {
         let resp: Response<serde_json::Value> = self
             .client
-            .request(Method::GET, &format!("/companies/{uid}/changes"))
+            .request_with_body(Method::POST, "/companies/search", req)
             .await?;
         let data = Client::extract_list(resp.data)?;
         Ok(Response {
@@ -109,11 +112,14 @@ impl<'a> Companies<'a> {
         })
     }
 
-    /// Get the board members / persons for a specific company.
-    pub async fn persons(&self, uid: &str) -> Result<Response<Vec<PersonRole>>> {
+    /// Batch lookup up to 50 companies by UID.
+    pub async fn batch(
+        &self,
+        req: &BatchCompanyRequest,
+    ) -> Result<Response<Vec<Company>>> {
         let resp: Response<serde_json::Value> = self
             .client
-            .request(Method::GET, &format!("/companies/{uid}/persons"))
+            .request_with_body(Method::POST, "/companies/batch", req)
             .await?;
         let data = Client::extract_list(resp.data)?;
         Ok(Response {
@@ -122,10 +128,13 @@ impl<'a> Companies<'a> {
         })
     }
 
-    /// Get the AI-generated dossier for a specific company (if available).
-    pub async fn dossier(&self, uid: &str) -> Result<Response<Dossier>> {
+    /// Compare two or more companies side-by-side.
+    pub async fn compare(
+        &self,
+        req: &CompareCompaniesRequest,
+    ) -> Result<Response<serde_json::Value>> {
         self.client
-            .request(Method::GET, &format!("/companies/{uid}/dossier"))
+            .request_with_body(Method::POST, "/companies/compare", req)
             .await
     }
 }

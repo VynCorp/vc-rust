@@ -15,11 +15,9 @@ impl<'a> ApiKeys<'a> {
     }
 
     /// List all API keys for the current team.
-    pub async fn list(&self) -> Result<Response<Vec<ApiKeyInfo>>> {
-        let resp: Response<serde_json::Value> = self
-            .client
-            .request(Method::GET, "/api-keys")
-            .await?;
+    pub async fn list(&self) -> Result<Response<Vec<ApiKey>>> {
+        let resp: Response<serde_json::Value> =
+            self.client.request(Method::GET, "/api-keys").await?;
         let data = Client::extract_list(resp.data)?;
         Ok(Response {
             data,

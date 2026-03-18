@@ -7,7 +7,7 @@ use crate::error::{ErrorBody, Result, VyncoError};
 use crate::resources::*;
 use crate::response::{Response, ResponseMeta};
 
-const DEFAULT_BASE_URL: &str = "https://api.vynco.ch/v1";
+const DEFAULT_BASE_URL: &str = "https://api.vynco.ch/api/v1";
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 const DEFAULT_MAX_RETRIES: u32 = 2;
 
@@ -29,7 +29,7 @@ impl ClientBuilder {
         }
     }
 
-    /// Set the API base URL (default: `https://api.vynco.ch/v1`).
+    /// Set the API base URL (default: `https://api.vynco.ch/api/v1`).
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
         self.base_url = url.into();
         self
@@ -107,6 +107,14 @@ impl Client {
         Dossiers::new(self)
     }
 
+    pub fn changes(&self) -> Changes<'_> {
+        Changes::new(self)
+    }
+
+    pub fn analytics(&self) -> Analytics<'_> {
+        Analytics::new(self)
+    }
+
     pub fn api_keys(&self) -> ApiKeys<'_> {
         ApiKeys::new(self)
     }
@@ -119,20 +127,28 @@ impl Client {
         Billing::new(self)
     }
 
-    pub fn webhooks(&self) -> Webhooks<'_> {
-        Webhooks::new(self)
+    pub fn watches(&self) -> Watches<'_> {
+        Watches::new(self)
+    }
+
+    pub fn news(&self) -> News<'_> {
+        News::new(self)
+    }
+
+    pub fn reports(&self) -> Reports<'_> {
+        Reports::new(self)
+    }
+
+    pub fn relationships(&self) -> Relationships<'_> {
+        Relationships::new(self)
     }
 
     pub fn teams(&self) -> Teams<'_> {
         Teams::new(self)
     }
 
-    pub fn users(&self) -> Users<'_> {
-        Users::new(self)
-    }
-
-    pub fn settings(&self) -> Settings<'_> {
-        Settings::new(self)
+    pub fn health(&self) -> Health<'_> {
+        Health::new(self)
     }
 
     // -- Internal request methods --------------------------------------------
@@ -280,6 +296,8 @@ impl Client {
             .json::<ErrorBody>()
             .await
             .unwrap_or_else(|_| ErrorBody {
+                error_type: String::new(),
+                title: String::new(),
                 detail: String::new(),
                 message: format!("HTTP {}", status.as_u16()),
                 status: status.as_u16(),
@@ -293,6 +311,7 @@ impl Client {
             StatusCode::UNPROCESSABLE_ENTITY | StatusCode::BAD_REQUEST => {
                 VyncoError::Validation(body)
             }
+            StatusCode::CONFLICT => VyncoError::Conflict(body),
             StatusCode::TOO_MANY_REQUESTS => VyncoError::RateLimit(body),
             s if s.is_server_error() => VyncoError::Server(body),
             _ => VyncoError::Server(body),

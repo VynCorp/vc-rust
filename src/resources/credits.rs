@@ -16,9 +16,7 @@ impl<'a> Credits<'a> {
 
     /// Get the current credit balance and tier information.
     pub async fn balance(&self) -> Result<Response<CreditBalance>> {
-        self.client
-            .request(Method::GET, "/credits/balance")
-            .await
+        self.client.request(Method::GET, "/credits/balance").await
     }
 
     /// Get credit usage breakdown by operation type.
@@ -36,12 +34,12 @@ impl<'a> Credits<'a> {
         }
     }
 
-    /// Get paginated credit transaction history.
+    /// Get credit ledger history.
     pub async fn history(
         &self,
         limit: Option<u32>,
         offset: Option<u32>,
-    ) -> Result<Response<serde_json::Value>> {
+    ) -> Result<Response<Vec<CreditLedgerEntry>>> {
         let mut query: Vec<(&str, String)> = Vec::new();
         if let Some(l) = limit {
             query.push(("limit", l.to_string()));
@@ -50,12 +48,17 @@ impl<'a> Credits<'a> {
             query.push(("offset", o.to_string()));
         }
 
-        if query.is_empty() {
-            self.client.request(Method::GET, "/credits/history").await
+        let resp: Response<serde_json::Value> = if query.is_empty() {
+            self.client.request(Method::GET, "/credits/history").await?
         } else {
             self.client
                 .request_with_params(Method::GET, "/credits/history", &query)
-                .await
-        }
+                .await?
+        };
+        let data = Client::extract_list(resp.data)?;
+        Ok(Response {
+            data,
+            meta: resp.meta,
+        })
     }
 }
