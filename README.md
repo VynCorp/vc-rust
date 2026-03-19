@@ -116,6 +116,26 @@ println!("Rate limit reset: {:?}", resp.meta.rate_limit_reset); // X-RateLimit-R
 println!("Data source: {:?}", resp.meta.data_source);        // X-Data-Source
 ```
 
+## Example CLI
+
+A full CLI example is included to demonstrate real-world SDK usage:
+
+```bash
+export VYNCO_API_KEY="vc_live_your_api_key"
+
+cargo run --example vynco_cli -- health                            # API health check
+cargo run --example vynco_cli -- credits                           # Credit balance
+cargo run --example vynco_cli -- team                              # Team info
+cargo run --example vynco_cli -- companies --canton ZH --search "Novartis"  # List with filters
+cargo run --example vynco_cli -- search "pharmaceutical"           # Full-text search
+cargo run --example vynco_cli -- company CHE-105.805.649           # Lookup by UID
+cargo run --example vynco_cli -- count --canton GE                 # Count companies
+cargo run --example vynco_cli -- stats                             # Database statistics
+cargo run --example vynco_cli -- changes                           # Recent changes
+```
+
+See [`examples/vynco_cli.rs`](examples/vynco_cli.rs) for the full source.
+
 ## Configuration
 
 ```rust

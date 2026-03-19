@@ -24,6 +24,11 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
 mockito = "1"
+clap = { version = "4", features = ["derive", "env"] }
+
+[[example]]
+name = "vynco_cli"
+path = "examples/vynco_cli.rs"
 
 [features]
 default = ["rustls-tls"]

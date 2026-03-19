@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Example CLI app** (`examples/vynco_cli.rs`): interactive command-line tool demonstrating
+  health checks, credit balance, team info, company listing/search/lookup/count, statistics,
+  and change tracking — serves as both an integration test and a usage reference
+
 ## [1.0.0] - 2026-03-18
 
 First stable release, aligned with the VynCo OpenAPI 1.0.0 specification.
