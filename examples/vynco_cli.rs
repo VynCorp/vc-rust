@@ -36,9 +36,7 @@
 //! ```
 
 use clap::{Parser, Subcommand};
-use vynco::{
-    Client, CompanyCountParams, CompanyListParams, CompanySearchRequest, VyncoError,
-};
+use vynco::{Client, CompanyCountParams, CompanyListParams, CompanySearchRequest, VyncoError};
 
 #[derive(Parser)]
 #[command(name = "vynco")]
@@ -193,7 +191,10 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             println!("Team:       {} ({})", t.name, t.slug);
             println!("ID:         {}", t.id);
             println!("Tier:       {}", t.tier);
-            println!("Credits:    {} (monthly: {})", t.credit_balance, t.monthly_credits);
+            println!(
+                "Credits:    {} (monthly: {})",
+                t.credit_balance, t.monthly_credits
+            );
             println!("Created:    {}", t.created_at);
             print_meta(&resp.meta);
         }
