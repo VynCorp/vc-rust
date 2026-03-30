@@ -39,7 +39,7 @@ pub struct HealthResponse {
 // ---------------------------------------------------------------------------
 
 /// A Swiss company record.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct Company {
     pub uid: String,
     pub name: String,
@@ -57,6 +57,48 @@ pub struct Company {
     pub auditor_category: Option<String>,
     #[serde(default)]
     pub updated_at: Option<String>,
+}
+
+/// Company detail response (single company with extended fields).
+#[derive(Debug, Clone, Deserialize)]
+pub struct CompanyDetail {
+    pub uid: String,
+    pub name: String,
+    #[serde(default)]
+    pub canton: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub legal_form: Option<String>,
+    #[serde(default)]
+    pub share_capital: Option<f64>,
+    #[serde(default)]
+    pub industry: Option<String>,
+    #[serde(default)]
+    pub auditor_category: Option<String>,
+    #[serde(default)]
+    pub purpose: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub updated_at: Option<String>,
+}
+
+/// Request body for company search.
+#[derive(Debug, Clone, Serialize)]
+pub struct CompanySearchRequest {
+    pub query: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<usize>,
+}
+
+/// Response wrapper for company search results.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CompanySearchResponse {
+    #[serde(default)]
+    pub data: Vec<CompanyDetail>,
+    #[serde(default)]
+    pub total: i64,
 }
 
 /// Query parameters for listing companies.
@@ -136,7 +178,7 @@ pub struct AuditorHistoryResponse {
 }
 
 /// A single auditor tenure record.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct AuditorTenure {
     pub id: String,
     #[serde(default)]

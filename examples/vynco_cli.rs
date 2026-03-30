@@ -1,6 +1,6 @@
 //! # VynCo CLI Example
 //!
-//! A command-line tool demonstrating the VynCo Rust SDK.
+//! A command-line tool demonstrating the VynCo Rust SDK v2.
 //!
 //! ## Usage
 //!
@@ -10,37 +10,28 @@
 //! # Check API health
 //! cargo run --example vynco_cli -- health
 //!
-//! # View credit balance
-//! cargo run --example vynco_cli -- credits
-//!
-//! # Show your team info
-//! cargo run --example vynco_cli -- team
-//!
 //! # List companies (with optional filters)
 //! cargo run --example vynco_cli -- companies --canton ZH --search "Novartis"
-//!
-//! # Full-text search across all companies
-//! cargo run --example vynco_cli -- search "pharmaceutical manufacturing"
 //!
 //! # Get a specific company by UID
 //! cargo run --example vynco_cli -- company CHE-105.805.649
 //!
-//! # Count companies (with optional filters)
-//! cargo run --example vynco_cli -- count --canton ZH
+//! # Count companies
+//! cargo run --example vynco_cli -- count
 //!
-//! # View company statistics
-//! cargo run --example vynco_cli -- stats
+//! # Show dashboard
+//! cargo run --example vynco_cli -- dashboard
 //!
-//! # List recent changes
-//! cargo run --example vynco_cli -- changes
+//! # Screen a company name
+//! cargo run --example vynco_cli -- screen "Test Corp"
 //! ```
 
 use clap::{Parser, Subcommand};
-use vynco::{Client, CompanyCountParams, CompanyListParams, CompanySearchRequest, VyncoError};
+use vynco::{Client, CompanyListParams, ScreeningRequest, VyncoError};
 
 #[derive(Parser)]
 #[command(name = "vynco")]
-#[command(about = "VynCo Swiss Corporate Intelligence CLI — example for the vynco Rust SDK")]
+#[command(about = "VynCo Swiss Corporate Intelligence CLI — example for the vynco Rust SDK v2")]
 struct Cli {
     /// API key (overrides VYNCO_API_KEY env var)
     #[arg(long, env = "VYNCO_API_KEY")]
@@ -55,12 +46,6 @@ enum Command {
     /// Check API health status
     Health,
 
-    /// Show credit balance and usage
-    Credits,
-
-    /// Show your team information
-    Team,
-
     /// List companies with optional filters
     Companies {
         /// Filter by Swiss canton (e.g. ZH, BE, GE)
@@ -71,27 +56,13 @@ enum Command {
         #[arg(long)]
         search: Option<String>,
 
-        /// Filter by status (e.g. Active, Dissolved)
-        #[arg(long)]
-        status: Option<String>,
-
         /// Page number (default: 1)
         #[arg(long, default_value = "1")]
-        page: u32,
+        page: i64,
 
         /// Page size (default: 10)
         #[arg(long, default_value = "10")]
-        page_size: u32,
-    },
-
-    /// Full-text search across all companies
-    Search {
-        /// Search query
-        query: String,
-
-        /// Maximum results to return
-        #[arg(long, default_value = "10")]
-        limit: u32,
+        page_size: i64,
     },
 
     /// Get a specific company by UID (e.g. CHE-105.805.649)
@@ -100,29 +71,16 @@ enum Command {
         uid: String,
     },
 
-    /// Count companies (with optional filters)
-    Count {
-        /// Filter by canton
-        #[arg(long)]
-        canton: Option<String>,
+    /// Count companies in the database
+    Count,
 
-        /// Filter by status
-        #[arg(long)]
-        status: Option<String>,
-    },
+    /// Show admin dashboard
+    Dashboard,
 
-    /// Show company database statistics
-    Stats,
-
-    /// List recent company changes
-    Changes {
-        /// Page number
-        #[arg(long, default_value = "1")]
-        page: u32,
-
-        /// Page size
-        #[arg(long, default_value = "10")]
-        page_size: u32,
+    /// Screen a company name against sanctions lists
+    Screen {
+        /// Company name to screen
+        name: String,
     },
 }
 
@@ -161,48 +119,15 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
         Command::Health => {
             let resp = client.health().check().await?;
             println!("API Status:  {}", resp.data.status);
-            println!("Uptime:      {}", resp.data.uptime);
-            if !resp.data.checks.is_empty() {
-                println!("\nHealth checks:");
-                for check in &resp.data.checks {
-                    println!(
-                        "  {:<16} {:<10} {}ms  {}",
-                        check.name, check.status, check.duration_ms, check.message
-                    );
-                }
-            }
-            print_meta(&resp.meta);
-        }
-
-        Command::Credits => {
-            let resp = client.credits().balance().await?;
-            let b = &resp.data;
-            println!("Tier:              {}", b.tier);
-            println!("Balance:           {} credits", b.balance);
-            println!("Monthly allowance: {} credits", b.monthly_credits);
-            println!("Used this month:   {} credits", b.used_this_month);
-            println!("Overage rate:      {:.2}/credit", b.overage_rate);
-            print_meta(&resp.meta);
-        }
-
-        Command::Team => {
-            let resp = client.teams().me().await?;
-            let t = &resp.data;
-            println!("Team:       {} ({})", t.name, t.slug);
-            println!("ID:         {}", t.id);
-            println!("Tier:       {}", t.tier);
-            println!(
-                "Credits:    {} (monthly: {})",
-                t.credit_balance, t.monthly_credits
-            );
-            println!("Created:    {}", t.created_at);
+            println!("Database:    {}", resp.data.database);
+            println!("Redis:       {}", resp.data.redis);
+            println!("Version:     {}", resp.data.version);
             print_meta(&resp.meta);
         }
 
         Command::Companies {
             canton,
             search,
-            status,
             page,
             page_size,
         } => {
@@ -211,43 +136,26 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
                 page_size: Some(page_size),
                 canton,
                 search,
-                status,
                 ..Default::default()
             };
             let resp = client.companies().list(&params).await?;
+            let total_pages = if resp.data.page_size > 0 {
+                (resp.data.total as f64 / resp.data.page_size as f64).ceil() as i64
+            } else {
+                1
+            };
             println!(
                 "Companies: page {}/{} ({} total)\n",
-                resp.data.page,
-                (resp.data.total_count as f64 / resp.data.page_size as f64).ceil() as u64,
-                resp.data.total_count,
+                resp.data.page, total_pages, resp.data.total,
             );
             for c in &resp.data.items {
                 println!(
-                    "  {:<18} {:<45} {:<6} {:<12} {}",
-                    c.uid, c.name, c.canton, c.legal_form, c.status
+                    "  {:<18} {:<45} {:<6} {}",
+                    c.uid,
+                    c.name,
+                    c.canton.as_deref().unwrap_or("-"),
+                    c.status.as_deref().unwrap_or("-"),
                 );
-            }
-            print_meta(&resp.meta);
-        }
-
-        Command::Search { query, limit } => {
-            let req = CompanySearchRequest {
-                query: query.clone(),
-                limit: Some(limit),
-            };
-            let resp = client.companies().search(&req).await?;
-            println!("Search \"{}\" — {} results:\n", query, resp.data.len());
-            for c in &resp.data {
-                println!("  {:<18} {:<45} {} ({})", c.uid, c.name, c.canton, c.status);
-                if !c.purpose.is_empty() {
-                    let purpose = if c.purpose.len() > 100 {
-                        format!("{}...", &c.purpose[..100])
-                    } else {
-                        c.purpose.clone()
-                    };
-                    println!("                    {}", purpose);
-                }
-                println!();
             }
             print_meta(&resp.meta);
         }
@@ -257,16 +165,17 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             let c = &resp.data;
             println!("UID:         {}", c.uid);
             println!("Name:        {}", c.name);
-            println!("Legal form:  {}", c.legal_form);
-            println!("Status:      {}", c.status);
-            println!("Canton:      {}", c.canton);
-            println!("Address:     {}", c.address);
-            println!("Auditor cat: {}", c.auditor_category);
-            if !c.purpose.is_empty() {
-                println!("Purpose:     {}", c.purpose);
+            println!(
+                "Legal form:  {}",
+                c.legal_form.as_deref().unwrap_or("-")
+            );
+            println!("Status:      {}", c.status.as_deref().unwrap_or("-"));
+            println!("Canton:      {}", c.canton.as_deref().unwrap_or("-"));
+            if let Some(ref cap) = c.share_capital {
+                println!("Share cap:   {:.2}", cap);
             }
-            if let Some(ref d) = c.created_at {
-                println!("Created:     {}", d);
+            if let Some(ref cat) = c.auditor_category {
+                println!("Auditor cat: {}", cat);
             }
             if let Some(ref d) = c.updated_at {
                 println!("Updated:     {}", d);
@@ -274,65 +183,55 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             print_meta(&resp.meta);
         }
 
-        Command::Count { canton, status } => {
-            let params = CompanyCountParams {
-                canton: canton.clone(),
-                status: status.clone(),
-                ..Default::default()
-            };
-            let resp = client.companies().count(&params).await?;
-            let filter = match (&canton, &status) {
-                (Some(c), Some(s)) => format!(" (canton={c}, status={s})"),
-                (Some(c), None) => format!(" (canton={c})"),
-                (None, Some(s)) => format!(" (status={s})"),
-                (None, None) => String::new(),
-            };
-            println!("Company count{filter}: {}", resp.data.count);
+        Command::Count => {
+            let resp = client.companies().count().await?;
+            println!("Company count: {}", resp.data.count);
             print_meta(&resp.meta);
         }
 
-        Command::Stats => {
-            let resp = client.companies().statistics().await?;
-            let s = &resp.data;
-            println!("Total companies:    {}", s.total_count);
-            println!("Enriched:           {}", s.enriched_count);
-            if !s.canton_counts.is_empty() {
-                println!("\nBy canton:");
-                let mut cantons: Vec<_> = s.canton_counts.iter().collect();
-                cantons.sort_by(|a, b| b.1.cmp(a.1));
-                for (canton, count) in cantons.iter().take(10) {
-                    println!("  {:<6} {:>8}", canton, count);
-                }
-                if cantons.len() > 10 {
-                    println!("  ... and {} more cantons", cantons.len() - 10);
-                }
-            }
+        Command::Dashboard => {
+            let resp = client.dashboard().get().await?;
+            let d = &resp.data.data;
+            println!("Total companies: {}", d.total_companies);
+            println!("With canton:     {}", d.with_canton);
+            println!("With status:     {}", d.with_status);
+            println!("With legal form: {}", d.with_legal_form);
+            println!("With capital:    {}", d.with_capital);
+            println!("Completeness:    {:.1}%", d.completeness_pct);
+
+            let t = &resp.data.auditor_tenures;
+            println!("\nAuditor tenures:");
+            println!("  Total:          {}", t.total_tenures);
+            println!("  Long (7+yr):    {}", t.long_tenures_7plus);
+            println!("  Avg years:      {:.1}", t.avg_tenure_years);
+            println!("  Max years:      {:.1}", t.max_tenure_years);
             print_meta(&resp.meta);
         }
 
-        Command::Changes { page, page_size } => {
-            let params = vynco::ChangeListParams {
-                page: Some(page),
-                page_size: Some(page_size),
-                ..Default::default()
+        Command::Screen { name } => {
+            let req = ScreeningRequest {
+                name: name.clone(),
+                uid: None,
+                sources: None,
             };
-            let resp = client.changes().list(&params).await?;
+            let resp = client.screening().screen(&req).await?;
+            println!("Screening: \"{}\"", name);
+            println!("Risk level: {}", resp.data.risk_level);
+            println!("Hits:       {}", resp.data.hit_count);
             println!(
-                "Recent changes: page {}/{} ({} total)\n",
-                resp.data.page,
-                (resp.data.total_count as f64 / resp.data.page_size as f64).ceil() as u64,
-                resp.data.total_count,
+                "Sources:    {}",
+                resp.data.sources_checked.join(", ")
             );
-            for ch in &resp.data.items {
-                println!(
-                    "  {} {:<18} {:<30} {}",
-                    &ch.detected_at[..10.min(ch.detected_at.len())],
-                    ch.company_uid,
-                    ch.company_name,
-                    ch.change_type,
-                );
-                if let (Some(old), Some(new)) = (&ch.old_value, &ch.new_value) {
-                    println!("    {} → {}", old, new);
+            if !resp.data.hits.is_empty() {
+                println!("\nMatches:");
+                for hit in &resp.data.hits {
+                    println!(
+                        "  {} (score: {:.2}) — {} [{}]",
+                        hit.matched_name,
+                        hit.score,
+                        hit.source,
+                        hit.datasets.join(", "),
+                    );
                 }
             }
             print_meta(&resp.meta);
