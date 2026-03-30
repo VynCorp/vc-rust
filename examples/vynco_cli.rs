@@ -36,7 +36,7 @@
 //! ```
 
 use clap::{Parser, Subcommand};
-use vynco::{Client, CompanyListParams, AuditorTenureParams, VyncoError};
+use vynco::{AuditorTenureParams, Client, CompanyListParams, VyncoError};
 
 #[derive(Parser)]
 #[command(name = "vynco")]
@@ -205,10 +205,7 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             let c = &resp.data;
             println!("UID:         {}", c.uid);
             println!("Name:        {}", c.name);
-            println!(
-                "Legal form:  {}",
-                c.legal_form.as_deref().unwrap_or("-")
-            );
+            println!("Legal form:  {}", c.legal_form.as_deref().unwrap_or("-"));
             println!("Status:      {}", c.status.as_deref().unwrap_or("-"));
             println!("Canton:      {}", c.canton.as_deref().unwrap_or("-"));
             if let Some(ref cap) = c.share_capital {
@@ -251,10 +248,7 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             println!("Screening: \"{}\"", name);
             println!("Risk level: {}", resp.data.risk_level);
             println!("Hits:       {}", resp.data.hit_count);
-            println!(
-                "Sources:    {}",
-                resp.data.sources_checked.join(", ")
-            );
+            println!("Sources:    {}", resp.data.sources_checked.join(", "));
             if !resp.data.hits.is_empty() {
                 println!("\nMatches:");
                 for hit in &resp.data.hits {

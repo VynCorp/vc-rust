@@ -67,11 +67,7 @@ mod tests {
             .base_url(server.url())
             .build()
             .unwrap();
-        let resp = client
-            .auditors()
-            .history("CHE-100.023.968")
-            .await
-            .unwrap();
+        let resp = client.auditors().history("CHE-100.023.968").await.unwrap();
         assert_eq!(resp.data.company_uid, "CHE-100.023.968");
         let current = resp.data.current_auditor.unwrap();
         assert_eq!(current.auditor_name, "KPMG AG");

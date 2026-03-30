@@ -42,11 +42,7 @@ impl<'a> Watchlists<'a> {
         req: &AddCompaniesRequest,
     ) -> Result<Response<AddCompaniesResponse>> {
         self.client
-            .request_with_body(
-                Method::POST,
-                &format!("/v1/watchlists/{id}/companies"),
-                req,
-            )
+            .request_with_body(Method::POST, &format!("/v1/watchlists/{id}/companies"), req)
             .await
     }
 

@@ -138,11 +138,7 @@ mod tests {
             .max_retries(0)
             .build()
             .unwrap();
-        let err = client
-            .companies()
-            .get("CHE-000.000.000")
-            .await
-            .unwrap_err();
+        let err = client.companies().get("CHE-000.000.000").await.unwrap_err();
         assert!(matches!(err, crate::VyncoError::NotFound(_)));
         mock.assert_async().await;
     }

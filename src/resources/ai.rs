@@ -26,10 +26,7 @@ impl<'a> Ai<'a> {
             .await
     }
 
-    pub async fn risk_score(
-        &self,
-        req: &RiskScoreRequest,
-    ) -> Result<Response<RiskScoreResponse>> {
+    pub async fn risk_score(&self, req: &RiskScoreRequest) -> Result<Response<RiskScoreResponse>> {
         self.client
             .request_with_body(Method::POST, "/v1/ai/risk-score", req)
             .await

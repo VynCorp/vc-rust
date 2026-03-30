@@ -329,5 +329,4 @@ impl Client {
             _ => VyncoError::Server(body),
         }
     }
-
 }

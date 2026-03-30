@@ -211,8 +211,7 @@ pub struct Watchlists<'a> {
 
 impl Watchlists<'_> {
     pub fn list(&self) -> Result<Response<Vec<WatchlistSummary>>> {
-        self.client
-            .block_on(self.client.inner.watchlists().list())
+        self.client.block_on(self.client.inner.watchlists().list())
     }
 
     pub fn create(&self, req: &CreateWatchlistRequest) -> Result<Response<Watchlist>> {
@@ -279,8 +278,7 @@ impl Webhooks<'_> {
     }
 
     pub fn test(&self, id: &str) -> Result<Response<TestDeliveryResponse>> {
-        self.client
-            .block_on(self.client.inner.webhooks().test(id))
+        self.client.block_on(self.client.inner.webhooks().test(id))
     }
 
     pub fn deliveries(
@@ -304,8 +302,7 @@ impl Exports<'_> {
     }
 
     pub fn get(&self, id: &str) -> Result<Response<ExportDownload>> {
-        self.client
-            .block_on(self.client.inner.exports().get(id))
+        self.client.block_on(self.client.inner.exports().get(id))
     }
 
     pub fn download(&self, id: &str) -> Result<ExportFile> {
@@ -328,7 +325,6 @@ impl Ai<'_> {
     }
 
     pub fn risk_score(&self, req: &RiskScoreRequest) -> Result<Response<RiskScoreResponse>> {
-        self.client
-            .block_on(self.client.inner.ai().risk_score(req))
+        self.client.block_on(self.client.inner.ai().risk_score(req))
     }
 }
