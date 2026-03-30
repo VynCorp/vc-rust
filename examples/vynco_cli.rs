@@ -19,15 +19,24 @@
 //! # Count companies
 //! cargo run --example vynco_cli -- count
 //!
-//! # Show dashboard
-//! cargo run --example vynco_cli -- dashboard
+//! # Show events for a company
+//! cargo run --example vynco_cli -- events CHE-105.805.649 --limit 10
 //!
 //! # Screen a company name
 //! cargo run --example vynco_cli -- screen "Test Corp"
+//!
+//! # Show dashboard
+//! cargo run --example vynco_cli -- dashboard
+//!
+//! # List long-tenure auditors
+//! cargo run --example vynco_cli -- auditors --min-years 10 --canton ZH
+//!
+//! # AI risk score for a company
+//! cargo run --example vynco_cli -- risk CHE-105.805.649
 //! ```
 
 use clap::{Parser, Subcommand};
-use vynco::{Client, CompanyListParams, ScreeningRequest, VyncoError};
+use vynco::{Client, CompanyListParams, AuditorTenureParams, VyncoError};
 
 #[derive(Parser)]
 #[command(name = "vynco")]
@@ -74,13 +83,44 @@ enum Command {
     /// Count companies in the database
     Count,
 
-    /// Show admin dashboard
-    Dashboard,
+    /// Show events for a company
+    Events {
+        /// Company UID
+        uid: String,
+
+        /// Maximum number of events to return
+        #[arg(long)]
+        limit: Option<u32>,
+    },
 
     /// Screen a company name against sanctions lists
     Screen {
         /// Company name to screen
         name: String,
+
+        /// Optional company UID for more precise matching
+        #[arg(long)]
+        uid: Option<String>,
+    },
+
+    /// Show admin dashboard
+    Dashboard,
+
+    /// List long-tenure auditors
+    Auditors {
+        /// Minimum tenure in years (e.g. 10)
+        #[arg(long)]
+        min_years: Option<f64>,
+
+        /// Filter by Swiss canton
+        #[arg(long)]
+        canton: Option<String>,
+    },
+
+    /// AI risk score for a company
+    Risk {
+        /// Company UID
+        uid: String,
     },
 }
 
@@ -189,29 +229,22 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
             print_meta(&resp.meta);
         }
 
-        Command::Dashboard => {
-            let resp = client.dashboard().get().await?;
-            let d = &resp.data.data;
-            println!("Total companies: {}", d.total_companies);
-            println!("With canton:     {}", d.with_canton);
-            println!("With status:     {}", d.with_status);
-            println!("With legal form: {}", d.with_legal_form);
-            println!("With capital:    {}", d.with_capital);
-            println!("Completeness:    {:.1}%", d.completeness_pct);
-
-            let t = &resp.data.auditor_tenures;
-            println!("\nAuditor tenures:");
-            println!("  Total:          {}", t.total_tenures);
-            println!("  Long (7+yr):    {}", t.long_tenures_7plus);
-            println!("  Avg years:      {:.1}", t.avg_tenure_years);
-            println!("  Max years:      {:.1}", t.max_tenure_years);
+        Command::Events { uid, limit } => {
+            let resp = client.companies().events(&uid, limit).await?;
+            println!("Events for {}: {} total\n", uid, resp.data.count);
+            for evt in &resp.data.events {
+                println!(
+                    "  [{:<10}] {:<30} {}",
+                    evt.category, evt.ce_type, evt.summary,
+                );
+            }
             print_meta(&resp.meta);
         }
 
-        Command::Screen { name } => {
-            let req = ScreeningRequest {
+        Command::Screen { name, uid } => {
+            let req = vynco::ScreeningRequest {
                 name: name.clone(),
-                uid: None,
+                uid,
                 sources: None,
             };
             let resp = client.screening().screen(&req).await?;
@@ -231,6 +264,73 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
                         hit.score,
                         hit.source,
                         hit.datasets.join(", "),
+                    );
+                }
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::Dashboard => {
+            let resp = client.dashboard().get().await?;
+            let d = &resp.data.data;
+            println!("Total companies: {}", d.total_companies);
+            println!("With canton:     {}", d.with_canton);
+            println!("With status:     {}", d.with_status);
+            println!("With legal form: {}", d.with_legal_form);
+            println!("With capital:    {}", d.with_capital);
+            println!("Completeness:    {:.1}%", d.completeness_pct);
+
+            let t = &resp.data.auditor_tenures;
+            println!("\nAuditor tenures:");
+            println!("  Total:          {}", t.total_tenures);
+            println!("  Long (7+yr):    {}", t.long_tenures_7plus);
+            println!("  Avg years:      {:.1}", t.avg_tenure_years);
+            println!("  Max years:      {:.1}", t.max_tenure_years);
+            print_meta(&resp.meta);
+        }
+
+        Command::Auditors { min_years, canton } => {
+            let params = AuditorTenureParams {
+                min_years,
+                canton,
+                page: Some(1),
+                page_size: Some(20),
+            };
+            let resp = client.auditors().tenures(&params).await?;
+            let total_pages = if resp.data.page_size > 0 {
+                (resp.data.total as f64 / resp.data.page_size as f64).ceil() as i64
+            } else {
+                1
+            };
+            println!(
+                "Auditor tenures: page {}/{} ({} total)\n",
+                resp.data.page, total_pages, resp.data.total,
+            );
+            for t in &resp.data.items {
+                println!(
+                    "  {:<18} {:<35} {:<25} {:.1} yr",
+                    t.company_uid,
+                    t.company_name,
+                    t.auditor_name,
+                    t.tenure_years.unwrap_or(0.0),
+                );
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::Risk { uid } => {
+            let req = vynco::RiskScoreRequest { uid: uid.clone() };
+            let resp = client.ai().risk_score(&req).await?;
+            let r = &resp.data;
+            println!("Risk score for {} ({})", r.uid, r.company_name);
+            println!("Overall:     {}/100", r.overall_score);
+            println!("Risk level:  {}", r.risk_level);
+            if !r.breakdown.is_empty() {
+                println!("\nBreakdown:");
+                for f in &r.breakdown {
+                    println!(
+                        "  {:<20} score: {:<4} weight: {:.2}  {}",
+                        f.factor, f.score, f.weight, f.description,
                     );
                 }
             }
