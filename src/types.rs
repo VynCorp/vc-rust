@@ -876,7 +876,7 @@ pub struct ChangeListParams {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompanyChange {
     pub id: String,
@@ -1073,7 +1073,7 @@ pub struct CandidateParams {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuditCandidate {
     pub uid: String,

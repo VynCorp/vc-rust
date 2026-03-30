@@ -69,6 +69,63 @@ impl<'a> Companies<'a> {
             self.client.request(Method::GET, &path).await
         }
     }
+
+    pub async fn statistics(&self) -> Result<Response<CompanyStatistics>> {
+        self.client
+            .request(Method::GET, "/v1/companies/statistics")
+            .await
+    }
+
+    pub async fn compare(&self, req: &CompareRequest) -> Result<Response<CompareResponse>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/companies/compare", req)
+            .await
+    }
+
+    pub async fn news(&self, uid: &str) -> Result<Response<Vec<NewsItem>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/news"))
+            .await
+    }
+
+    pub async fn reports(&self, uid: &str) -> Result<Response<Vec<CompanyReport>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/reports"))
+            .await
+    }
+
+    pub async fn relationships(&self, uid: &str) -> Result<Response<Vec<Relationship>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/relationships"))
+            .await
+    }
+
+    pub async fn hierarchy(&self, uid: &str) -> Result<Response<HierarchyResponse>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/hierarchy"))
+            .await
+    }
+
+    pub async fn fingerprint(&self, uid: &str) -> Result<Response<Fingerprint>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/fingerprint"))
+            .await
+    }
+
+    pub async fn nearby(&self, params: &NearbyParams) -> Result<Response<Vec<NearbyCompany>>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        query.push(("lat", params.lat.to_string()));
+        query.push(("lng", params.lng.to_string()));
+        if let Some(r) = params.radius_km {
+            query.push(("radiusKm", r.to_string()));
+        }
+        if let Some(l) = params.limit {
+            query.push(("limit", l.to_string()));
+        }
+        self.client
+            .request_with_params(Method::GET, "/v1/companies/nearby", &query)
+            .await
+    }
 }
 
 #[cfg(test)]
@@ -159,6 +216,55 @@ mod tests {
             .unwrap();
         let resp = client.companies().count().await.unwrap();
         assert_eq!(resp.data.count, 507234);
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_compare() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/v1/companies/compare")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"uids":["CHE-100.023.968","CHE-200.000.001"],"names":["Test AG","Example GmbH"],"dimensions":[{"field":"canton","label":"Canton","values":["ZH","BE"]},{"field":"legalForm","label":"Legal Form","values":["AG","GmbH"]}]}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let req = crate::CompareRequest {
+            uids: vec!["CHE-100.023.968".into(), "CHE-200.000.001".into()],
+        };
+        let resp = client.companies().compare(&req).await.unwrap();
+        assert_eq!(resp.data.uids.len(), 2);
+        assert_eq!(resp.data.dimensions.len(), 2);
+        assert_eq!(resp.data.dimensions[0].field, "canton");
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_fingerprint() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/fingerprint")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"companyUid":"CHE-100.023.968","name":"Test AG","industrySector":"Finance","industryGroup":null,"industry":null,"sizeCategory":"large","employeeCountEstimate":500,"capitalAmount":100000.0,"capitalCurrency":"CHF","revenue":null,"netIncome":null,"auditorTier":"big4","changeFrequency":5,"boardSize":7,"companyAge":25,"canton":"ZH","legalForm":"AG","hasParentCompany":false,"subsidiaryCount":3,"generatedAt":"2026-03-30T12:00:00Z","fingerprintVersion":"1.0"}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client
+            .companies()
+            .fingerprint("CHE-100.023.968")
+            .await
+            .unwrap();
+        assert_eq!(resp.data.company_uid, "CHE-100.023.968");
+        assert_eq!(resp.data.board_size, 7);
+        assert_eq!(resp.data.canton, "ZH");
         mock.assert_async().await;
     }
 
