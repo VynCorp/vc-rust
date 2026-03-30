@@ -33,10 +33,22 @@
 //!
 //! # AI risk score for a company
 //! cargo run --example vynco_cli -- risk CHE-105.805.649
+//!
+//! # Show credit balance
+//! cargo run --example vynco_cli -- credits
+//!
+//! # Show team info
+//! cargo run --example vynco_cli -- team
+//!
+//! # List recent changes
+//! cargo run --example vynco_cli -- changes --page 1 --page-size 10
+//!
+//! # Show board members for a company
+//! cargo run --example vynco_cli -- board-members CHE-105.805.649
 //! ```
 
 use clap::{Parser, Subcommand};
-use vynco::{AuditorTenureParams, Client, CompanyListParams, VyncoError};
+use vynco::{AuditorTenureParams, ChangeListParams, Client, CompanyListParams, VyncoError};
 
 #[derive(Parser)]
 #[command(name = "vynco")]
@@ -119,6 +131,29 @@ enum Command {
 
     /// AI risk score for a company
     Risk {
+        /// Company UID
+        uid: String,
+    },
+
+    /// Show credit balance
+    Credits,
+
+    /// Show team info
+    Team,
+
+    /// List recent SOGC changes
+    Changes {
+        /// Page number (default: 1)
+        #[arg(long, default_value = "1")]
+        page: i64,
+
+        /// Page size (default: 10)
+        #[arg(long, default_value = "10")]
+        page_size: i64,
+    },
+
+    /// Show board members for a company
+    BoardMembers {
         /// Company UID
         uid: String,
     },
@@ -327,6 +362,72 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
                         f.factor, f.score, f.weight, f.description,
                     );
                 }
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::Credits => {
+            let resp = client.credits().balance().await?;
+            let b = &resp.data;
+            println!("Credit balance:    {}", b.balance);
+            println!("Monthly credits:   {}", b.monthly_credits);
+            println!("Used this month:   {}", b.used_this_month);
+            println!("Tier:              {}", b.tier);
+            println!("Overage rate:      {}", b.overage_rate);
+            print_meta(&resp.meta);
+        }
+
+        Command::Team => {
+            let resp = client.teams().me().await?;
+            let t = &resp.data;
+            println!("Team ID:           {}", t.id);
+            println!("Name:              {}", t.name);
+            println!("Slug:              {}", t.slug);
+            println!("Tier:              {}", t.tier);
+            println!("Credit balance:    {}", t.credit_balance);
+            println!("Monthly credits:   {}", t.monthly_credits);
+            print_meta(&resp.meta);
+        }
+
+        Command::Changes { page, page_size } => {
+            let params = ChangeListParams {
+                page: Some(page),
+                page_size: Some(page_size),
+                ..Default::default()
+            };
+            let resp = client.changes().list(&params).await?;
+            let total_pages = if resp.data.page_size > 0 {
+                (resp.data.total as f64 / resp.data.page_size as f64).ceil() as i64
+            } else {
+                1
+            };
+            println!(
+                "Changes: page {}/{} ({} total)\n",
+                resp.data.page, total_pages, resp.data.total,
+            );
+            for ch in &resp.data.items {
+                println!(
+                    "  {:<18} {:<12} {:<30} {}",
+                    ch.company_uid,
+                    ch.change_type,
+                    ch.company_name.as_deref().unwrap_or("-"),
+                    ch.detected_at,
+                );
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::BoardMembers { uid } => {
+            let resp = client.persons().board_members(&uid).await?;
+            println!("Board members for {}:\n", uid);
+            for m in &resp.data {
+                println!(
+                    "  {:<20} {:<20} {:<15} since {}",
+                    m.first_name.as_deref().unwrap_or("-"),
+                    m.last_name.as_deref().unwrap_or("-"),
+                    m.role,
+                    m.since.as_deref().unwrap_or("-"),
+                );
             }
             print_meta(&resp.meta);
         }

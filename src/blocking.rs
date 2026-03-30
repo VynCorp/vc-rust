@@ -125,6 +125,42 @@ impl Client {
     pub fn ai(&self) -> Ai<'_> {
         Ai { client: self }
     }
+
+    pub fn api_keys(&self) -> ApiKeys<'_> {
+        ApiKeys { client: self }
+    }
+
+    pub fn credits(&self) -> Credits<'_> {
+        Credits { client: self }
+    }
+
+    pub fn billing(&self) -> Billing<'_> {
+        Billing { client: self }
+    }
+
+    pub fn teams(&self) -> Teams<'_> {
+        Teams { client: self }
+    }
+
+    pub fn changes(&self) -> Changes<'_> {
+        Changes { client: self }
+    }
+
+    pub fn persons(&self) -> Persons<'_> {
+        Persons { client: self }
+    }
+
+    pub fn analytics(&self) -> Analytics<'_> {
+        Analytics { client: self }
+    }
+
+    pub fn dossiers(&self) -> Dossiers<'_> {
+        Dossiers { client: self }
+    }
+
+    pub fn graph(&self) -> Graph<'_> {
+        Graph { client: self }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +198,46 @@ impl Companies<'_> {
     pub fn events(&self, uid: &str, limit: Option<u32>) -> Result<Response<EventListResponse>> {
         self.client
             .block_on(self.client.inner.companies().events(uid, limit))
+    }
+
+    pub fn statistics(&self) -> Result<Response<CompanyStatistics>> {
+        self.client
+            .block_on(self.client.inner.companies().statistics())
+    }
+
+    pub fn compare(&self, req: &CompareRequest) -> Result<Response<CompareResponse>> {
+        self.client
+            .block_on(self.client.inner.companies().compare(req))
+    }
+
+    pub fn news(&self, uid: &str) -> Result<Response<Vec<NewsItem>>> {
+        self.client
+            .block_on(self.client.inner.companies().news(uid))
+    }
+
+    pub fn reports(&self, uid: &str) -> Result<Response<Vec<CompanyReport>>> {
+        self.client
+            .block_on(self.client.inner.companies().reports(uid))
+    }
+
+    pub fn relationships(&self, uid: &str) -> Result<Response<Vec<Relationship>>> {
+        self.client
+            .block_on(self.client.inner.companies().relationships(uid))
+    }
+
+    pub fn hierarchy(&self, uid: &str) -> Result<Response<HierarchyResponse>> {
+        self.client
+            .block_on(self.client.inner.companies().hierarchy(uid))
+    }
+
+    pub fn fingerprint(&self, uid: &str) -> Result<Response<Fingerprint>> {
+        self.client
+            .block_on(self.client.inner.companies().fingerprint(uid))
+    }
+
+    pub fn nearby(&self, params: &NearbyParams) -> Result<Response<Vec<NearbyCompany>>> {
+        self.client
+            .block_on(self.client.inner.companies().nearby(params))
     }
 }
 
@@ -326,5 +402,244 @@ impl Ai<'_> {
 
     pub fn risk_score(&self, req: &RiskScoreRequest) -> Result<Response<RiskScoreResponse>> {
         self.client.block_on(self.client.inner.ai().risk_score(req))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// New resource wrappers (9 modules)
+// ---------------------------------------------------------------------------
+
+pub struct ApiKeys<'a> {
+    client: &'a Client,
+}
+
+impl ApiKeys<'_> {
+    pub fn create(&self, req: &CreateApiKeyRequest) -> Result<Response<ApiKeyCreated>> {
+        self.client
+            .block_on(self.client.inner.api_keys().create(req))
+    }
+
+    pub fn list(&self) -> Result<Response<Vec<ApiKey>>> {
+        self.client.block_on(self.client.inner.api_keys().list())
+    }
+
+    pub fn revoke(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.api_keys().revoke(id))
+    }
+}
+
+pub struct Credits<'a> {
+    client: &'a Client,
+}
+
+impl Credits<'_> {
+    pub fn balance(&self) -> Result<Response<CreditBalance>> {
+        self.client.block_on(self.client.inner.credits().balance())
+    }
+
+    pub fn usage(&self, since: Option<&str>) -> Result<Response<CreditUsage>> {
+        self.client
+            .block_on(self.client.inner.credits().usage(since))
+    }
+
+    pub fn history(
+        &self,
+        limit: Option<i64>,
+        offset: Option<i64>,
+    ) -> Result<Response<CreditHistory>> {
+        self.client
+            .block_on(self.client.inner.credits().history(limit, offset))
+    }
+}
+
+pub struct Billing<'a> {
+    client: &'a Client,
+}
+
+impl Billing<'_> {
+    pub fn create_checkout(&self, req: &CheckoutRequest) -> Result<Response<SessionUrl>> {
+        self.client
+            .block_on(self.client.inner.billing().create_checkout(req))
+    }
+
+    pub fn create_portal(&self) -> Result<Response<SessionUrl>> {
+        self.client
+            .block_on(self.client.inner.billing().create_portal())
+    }
+}
+
+pub struct Teams<'a> {
+    client: &'a Client,
+}
+
+impl Teams<'_> {
+    pub fn me(&self) -> Result<Response<Team>> {
+        self.client.block_on(self.client.inner.teams().me())
+    }
+
+    pub fn create(&self, req: &CreateTeamRequest) -> Result<Response<Team>> {
+        self.client
+            .block_on(self.client.inner.teams().create(req))
+    }
+
+    pub fn members(&self) -> Result<Response<Vec<TeamMember>>> {
+        self.client.block_on(self.client.inner.teams().members())
+    }
+
+    pub fn invite_member(&self, req: &InviteMemberRequest) -> Result<Response<Invitation>> {
+        self.client
+            .block_on(self.client.inner.teams().invite_member(req))
+    }
+
+    pub fn update_member_role(
+        &self,
+        id: &str,
+        req: &UpdateMemberRoleRequest,
+    ) -> Result<Response<TeamMember>> {
+        self.client
+            .block_on(self.client.inner.teams().update_member_role(id, req))
+    }
+
+    pub fn remove_member(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.teams().remove_member(id))
+    }
+
+    pub fn billing_summary(&self) -> Result<Response<BillingSummary>> {
+        self.client
+            .block_on(self.client.inner.teams().billing_summary())
+    }
+}
+
+pub struct Changes<'a> {
+    client: &'a Client,
+}
+
+impl Changes<'_> {
+    pub fn list(
+        &self,
+        params: &ChangeListParams,
+    ) -> Result<Response<PagedResponse<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().list(params))
+    }
+
+    pub fn by_company(&self, uid: &str) -> Result<Response<Vec<CompanyChange>>> {
+        self.client
+            .block_on(self.client.inner.changes().by_company(uid))
+    }
+
+    pub fn statistics(&self) -> Result<Response<ChangeStatistics>> {
+        self.client
+            .block_on(self.client.inner.changes().statistics())
+    }
+}
+
+pub struct Persons<'a> {
+    client: &'a Client,
+}
+
+impl Persons<'_> {
+    pub fn board_members(&self, uid: &str) -> Result<Response<Vec<BoardMember>>> {
+        self.client
+            .block_on(self.client.inner.persons().board_members(uid))
+    }
+}
+
+pub struct Analytics<'a> {
+    client: &'a Client,
+}
+
+impl Analytics<'_> {
+    pub fn statistics(&self) -> Result<Response<CompanyStatistics>> {
+        self.client
+            .block_on(self.client.inner.analytics().statistics())
+    }
+
+    pub fn cantons(&self) -> Result<Response<Vec<CantonDistribution>>> {
+        self.client
+            .block_on(self.client.inner.analytics().cantons())
+    }
+
+    pub fn auditors(&self) -> Result<Response<Vec<AuditorMarketShare>>> {
+        self.client
+            .block_on(self.client.inner.analytics().auditors())
+    }
+
+    pub fn cluster(&self, req: &ClusterRequest) -> Result<Response<ClusterResponse>> {
+        self.client
+            .block_on(self.client.inner.analytics().cluster(req))
+    }
+
+    pub fn anomalies(&self, req: &AnomalyRequest) -> Result<Response<AnomalyResponse>> {
+        self.client
+            .block_on(self.client.inner.analytics().anomalies(req))
+    }
+
+    pub fn rfm_segments(&self) -> Result<Response<RfmSegmentsResponse>> {
+        self.client
+            .block_on(self.client.inner.analytics().rfm_segments())
+    }
+
+    pub fn cohorts(&self, params: &CohortParams) -> Result<Response<CohortResponse>> {
+        self.client
+            .block_on(self.client.inner.analytics().cohorts(params))
+    }
+
+    pub fn candidates(
+        &self,
+        params: &CandidateParams,
+    ) -> Result<Response<PagedResponse<AuditCandidate>>> {
+        self.client
+            .block_on(self.client.inner.analytics().candidates(params))
+    }
+}
+
+pub struct Dossiers<'a> {
+    client: &'a Client,
+}
+
+impl Dossiers<'_> {
+    pub fn create(&self, req: &CreateDossierRequest) -> Result<Response<Dossier>> {
+        self.client
+            .block_on(self.client.inner.dossiers().create(req))
+    }
+
+    pub fn list(&self) -> Result<Response<Vec<DossierSummary>>> {
+        self.client.block_on(self.client.inner.dossiers().list())
+    }
+
+    pub fn get(&self, id_or_uid: &str) -> Result<Response<Dossier>> {
+        self.client
+            .block_on(self.client.inner.dossiers().get(id_or_uid))
+    }
+
+    pub fn delete(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.dossiers().delete(id))
+    }
+}
+
+pub struct Graph<'a> {
+    client: &'a Client,
+}
+
+impl Graph<'_> {
+    pub fn get(&self, uid: &str) -> Result<Response<GraphResponse>> {
+        self.client.block_on(self.client.inner.graph().get(uid))
+    }
+
+    pub fn export(&self, uid: &str, format: &str) -> Result<ExportFile> {
+        self.client
+            .block_on(self.client.inner.graph().export(uid, format))
+    }
+
+    pub fn analyze(
+        &self,
+        req: &NetworkAnalysisRequest,
+    ) -> Result<Response<NetworkAnalysisResponse>> {
+        self.client
+            .block_on(self.client.inner.graph().analyze(req))
     }
 }

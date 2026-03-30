@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 6 new resource modules (22 endpoints): auditors, dashboard, screening, watchlists, webhooks, exports, ai
+- 9 new resource modules (41 endpoints): api_keys, credits, teams, billing, changes, persons, analytics, dossiers, graph
+- 8 new company sub-endpoints: statistics, compare, news, reports, relationships, hierarchy, fingerprint, nearby
 - `Client::request_bytes()` for binary file downloads
 - `ExportFile` type for downloaded export data
 - Company events via `companies().events(uid, limit)` (CloudEvents format)

@@ -62,6 +62,14 @@ async fn main() -> Result<(), vynco::VyncoError> {
     }).await?;
     println!("Risk score: {}/100", risk.data.overall_score);
 
+    // Credit balance
+    let credits = client.credits().balance().await?;
+    println!("Credits remaining: {}", credits.data.balance);
+
+    // Team info
+    let team = client.teams().me().await?;
+    println!("Team: {} ({})", team.data.name, team.data.tier);
+
     Ok(())
 }
 ```
@@ -84,12 +92,12 @@ fn main() -> Result<(), vynco::VyncoError> {
 
 ## API Coverage
 
-9 resource modules covering 28 endpoints:
+18 resource modules covering 69 endpoints:
 
 | Resource | Methods |
 |----------|---------|
 | `health()` | `check` |
-| `companies()` | `list`, `get`, `count`, `events` |
+| `companies()` | `list`, `get`, `count`, `events`, `statistics`, `compare`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby` |
 | `auditors()` | `history`, `tenures` |
 | `dashboard()` | `get` |
 | `screening()` | `screen` |
@@ -97,6 +105,15 @@ fn main() -> Result<(), vynco::VyncoError> {
 | `webhooks()` | `list`, `create`, `update`, `delete`, `test`, `deliveries` |
 | `exports()` | `create`, `get`, `download` |
 | `ai()` | `dossier`, `search`, `risk_score` |
+| `api_keys()` | `list`, `create`, `revoke` |
+| `credits()` | `balance`, `usage`, `history` |
+| `billing()` | `create_checkout`, `create_portal` |
+| `teams()` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary` |
+| `changes()` | `list`, `by_company`, `statistics` |
+| `persons()` | `board_members` |
+| `analytics()` | `statistics`, `cantons`, `auditors`, `cluster`, `anomalies`, `rfm_segments`, `cohorts`, `candidates` |
+| `dossiers()` | `create`, `list`, `get`, `delete` |
+| `graph()` | `get`, `export`, `analyze` |
 
 ## Response Metadata
 
@@ -130,6 +147,10 @@ cargo run --example vynco_cli -- screen "Test Corp"                # Sanctions s
 cargo run --example vynco_cli -- dashboard                         # Admin dashboard
 cargo run --example vynco_cli -- auditors --min-years 10 --canton ZH  # Long-tenure auditors
 cargo run --example vynco_cli -- risk CHE-105.805.649              # AI risk score
+cargo run --example vynco_cli -- credits                           # Credit balance
+cargo run --example vynco_cli -- team                              # Team info
+cargo run --example vynco_cli -- changes --page 1 --page-size 10  # Recent SOGC changes
+cargo run --example vynco_cli -- board-members CHE-105.805.649     # Board members
 ```
 
 See [`examples/vynco_cli.rs`](examples/vynco_cli.rs) for the full source.
