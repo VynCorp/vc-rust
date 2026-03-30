@@ -10,19 +10,22 @@ pub struct ErrorBody {
     #[serde(default)]
     pub title: String,
     #[serde(default)]
-    pub detail: String,
-    #[serde(default)]
-    pub message: String,
-    #[serde(default)]
     pub status: u16,
+    #[serde(default)]
+    pub detail: Option<String>,
+    #[serde(default)]
+    pub instance: Option<String>,
 }
 
 impl fmt::Display for ErrorBody {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if !self.detail.is_empty() {
-            write!(f, "{}", self.detail)
-        } else if !self.message.is_empty() {
-            write!(f, "{}", self.message)
+        if let Some(ref d) = self.detail {
+            if !d.is_empty() {
+                return write!(f, "{}", d);
+            }
+        }
+        if !self.title.is_empty() {
+            write!(f, "{}", self.title)
         } else {
             write!(f, "HTTP {}", self.status)
         }

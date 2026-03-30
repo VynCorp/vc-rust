@@ -291,9 +291,9 @@ impl Client {
             .unwrap_or_else(|_| ErrorBody {
                 error_type: String::new(),
                 title: String::new(),
-                detail: String::new(),
-                message: format!("HTTP {}", status.as_u16()),
                 status: status.as_u16(),
+                detail: Some(format!("HTTP {}", status.as_u16())),
+                instance: None,
             });
 
         match status {
