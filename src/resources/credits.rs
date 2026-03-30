@@ -30,9 +30,7 @@ impl<'a> Credits<'a> {
                 )
                 .await
         } else {
-            self.client
-                .request(Method::GET, "/v1/credits/usage")
-                .await
+            self.client.request(Method::GET, "/v1/credits/usage").await
         }
     }
 

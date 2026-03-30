@@ -34,6 +34,18 @@
 //! # AI risk score for a company
 //! cargo run --example vynco_cli -- risk CHE-105.805.649
 //!
+//! # Company fingerprint (extended data profile)
+//! cargo run --example vynco_cli -- fingerprint CHE-105.805.649
+//!
+//! # Company network graph
+//! cargo run --example vynco_cli -- graph CHE-105.805.649
+//!
+//! # Generate an AI dossier
+//! cargo run --example vynco_cli -- dossier CHE-105.805.649
+//!
+//! # Compare two or more companies
+//! cargo run --example vynco_cli -- compare CHE-105.805.649 CHE-109.340.740
+//!
 //! # Show credit balance
 //! cargo run --example vynco_cli -- credits
 //!
@@ -133,6 +145,30 @@ enum Command {
     Risk {
         /// Company UID
         uid: String,
+    },
+
+    /// Show company fingerprint (extended data profile)
+    Fingerprint {
+        /// Company UID
+        uid: String,
+    },
+
+    /// Show company network graph (nodes and links)
+    Graph {
+        /// Company UID
+        uid: String,
+    },
+
+    /// Generate an AI dossier for a company
+    Dossier {
+        /// Company UID
+        uid: String,
+    },
+
+    /// Compare two or more companies side by side
+    Compare {
+        /// Company UIDs to compare (at least two)
+        uids: Vec<String>,
     },
 
     /// Show credit balance
@@ -361,6 +397,112 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
                         "  {:<20} score: {:<4} weight: {:.2}  {}",
                         f.factor, f.score, f.weight, f.description,
                     );
+                }
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::Fingerprint { uid } => {
+            let resp = client.companies().fingerprint(&uid).await?;
+            let f = &resp.data;
+            println!("Fingerprint for {} ({})", f.company_uid, f.name);
+            println!("Canton:      {}", f.canton);
+            println!("Legal form:  {}", f.legal_form);
+            println!("Board size:  {}", f.board_size);
+            println!("Company age: {} years", f.company_age);
+            println!("Change freq: {} events", f.change_frequency);
+            if let Some(ref sector) = f.industry_sector {
+                println!("Sector:      {}", sector);
+            }
+            if let Some(ref size) = f.size_category {
+                println!("Size:        {}", size);
+            }
+            if let Some(employees) = f.employee_count_estimate {
+                println!("Employees:   ~{}", employees);
+            }
+            if let Some(capital) = f.capital_amount {
+                println!(
+                    "Capital:     {:.0} {}",
+                    capital,
+                    f.capital_currency.as_deref().unwrap_or("CHF")
+                );
+            }
+            if let Some(ref tier) = f.auditor_tier {
+                println!("Auditor:     {}", tier);
+            }
+            println!(
+                "Parent co:   {}",
+                if f.has_parent_company { "yes" } else { "no" }
+            );
+            println!("Subsidiaries:{}", f.subsidiary_count);
+            print_meta(&resp.meta);
+        }
+
+        Command::Graph { uid } => {
+            let resp = client.graph().get(&uid).await?;
+            let g = &resp.data;
+            println!("Network graph for {}\n", uid);
+            println!("Nodes: {}  Links: {}", g.nodes.len(), g.links.len());
+            if !g.nodes.is_empty() {
+                println!("\nSample nodes:");
+                for node in g.nodes.iter().take(10) {
+                    println!("  [{:<8}] {:<40} {}", node.node_type, node.name, node.uid,);
+                }
+                if g.nodes.len() > 10 {
+                    println!("  ... and {} more", g.nodes.len() - 10);
+                }
+            }
+            if !g.links.is_empty() {
+                println!("\nSample links:");
+                for link in g.links.iter().take(10) {
+                    println!("  {} -> {} ({})", link.source, link.target, link.link_type,);
+                }
+                if g.links.len() > 10 {
+                    println!("  ... and {} more", g.links.len() - 10);
+                }
+            }
+            print_meta(&resp.meta);
+        }
+
+        Command::Dossier { uid } => {
+            let req = vynco::CreateDossierRequest {
+                uid: uid.clone(),
+                level: Some("standard".into()),
+            };
+            let resp = client.dossiers().create(&req).await?;
+            let d = &resp.data;
+            println!("Dossier for {} ({})", d.company_uid, d.company_name);
+            println!("ID:      {}", d.id);
+            println!("Level:   {}", d.level);
+            println!("Sources: {}", d.sources.join(", "));
+            println!("Created: {}", d.created_at);
+            println!("\n{}", d.content);
+            print_meta(&resp.meta);
+        }
+
+        Command::Compare { uids } => {
+            if uids.len() < 2 {
+                eprintln!("Error: compare requires at least two UIDs");
+                std::process::exit(1);
+            }
+            let req = vynco::CompareRequest { uids };
+            let resp = client.companies().compare(&req).await?;
+            let c = &resp.data;
+            // Print company names header
+            println!("Comparing {} companies:\n", c.uids.len());
+            for (i, name) in c.names.iter().enumerate() {
+                println!("  [{}] {} ({})", i + 1, name, c.uids[i]);
+            }
+            // Print dimensions
+            if !c.dimensions.is_empty() {
+                println!("\nDimensions:");
+                for dim in &c.dimensions {
+                    let vals: Vec<&str> = dim
+                        .values
+                        .iter()
+                        .map(|v| v.as_deref().unwrap_or("-"))
+                        .collect();
+                    println!("  {:<20} {}", dim.label, vals.join(" | "));
                 }
             }
             print_meta(&resp.meta);

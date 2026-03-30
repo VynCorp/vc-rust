@@ -49,9 +49,7 @@ mod tests {
             .base_url(server.url())
             .build()
             .unwrap();
-        let req = CheckoutRequest {
-            tier: "pro".into(),
-        };
+        let req = CheckoutRequest { tier: "pro".into() };
         let resp = client.billing().create_checkout(&req).await.unwrap();
         assert!(resp.data.url.contains("stripe.com"));
         mock.assert_async().await;

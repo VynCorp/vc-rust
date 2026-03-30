@@ -5,10 +5,7 @@
 [![CI](https://github.com/VynCorp/vc-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/VynCorp/vc-rust/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/crates/l/vynco.svg)](LICENSE)
 
-Rust SDK for the [VynCo](https://vynco.ch) Swiss Corporate Intelligence API.
-
-Access 500,000+ Swiss companies with event tracking, sanctions screening, AI-powered analysis,
-watchlists, webhooks, and bulk data exports.
+Rust SDK for the [VynCo](https://vynco.ch) Swiss Corporate Intelligence API. Access 500,000+ Swiss companies from the commercial register with change tracking, sanctions screening, AI-powered risk analysis, network graphs, watchlists, webhooks, and bulk data exports.
 
 ## Installation
 
@@ -31,8 +28,7 @@ use vynco::{Client, CompanyListParams};
 
 #[tokio::main]
 async fn main() -> Result<(), vynco::VyncoError> {
-    let client = Client::builder("vc_live_your_api_key")
-        .build()?;
+    let client = Client::builder("vc_live_your_api_key").build()?;
 
     // List companies with filtering
     let params = CompanyListParams {
@@ -42,33 +38,26 @@ async fn main() -> Result<(), vynco::VyncoError> {
     };
     let resp = client.companies().list(&params).await?;
     println!("Found {} companies", resp.data.total);
-    println!("Credits used: {:?}", resp.meta.credits_used);
 
-    // Get company by UID
+    // Get a single company
     let company = client.companies().get("CHE-105.805.080").await?;
     println!("{}: {:?}", company.data.name, company.data.legal_form);
 
     // Sanctions screening
     let screening = client.screening().screen(&vynco::ScreeningRequest {
-        name: "Novartis AG".into(),
-        uid: None,
-        sources: None,
+        name: "Suspicious Corp".into(), uid: None, sources: None,
     }).await?;
-    println!("Risk level: {}", screening.data.risk_level);
+    println!("Risk: {} ({} hits)", screening.data.risk_level, screening.data.hit_count);
 
     // AI risk score
     let risk = client.ai().risk_score(&vynco::RiskScoreRequest {
         uid: "CHE-105.805.080".into(),
     }).await?;
-    println!("Risk score: {}/100", risk.data.overall_score);
+    println!("Risk score: {}/100 ({})", risk.data.overall_score, risk.data.risk_level);
 
     // Credit balance
     let credits = client.credits().balance().await?;
     println!("Credits remaining: {}", credits.data.balance);
-
-    // Team info
-    let team = client.teams().me().await?;
-    println!("Team: {} ({})", team.data.name, team.data.tier);
 
     Ok(())
 }
@@ -147,6 +136,10 @@ cargo run --example vynco_cli -- screen "Test Corp"                # Sanctions s
 cargo run --example vynco_cli -- dashboard                         # Admin dashboard
 cargo run --example vynco_cli -- auditors --min-years 10 --canton ZH  # Long-tenure auditors
 cargo run --example vynco_cli -- risk CHE-105.805.649              # AI risk score
+cargo run --example vynco_cli -- fingerprint CHE-105.805.649       # Company data fingerprint
+cargo run --example vynco_cli -- graph CHE-105.805.649             # Network graph
+cargo run --example vynco_cli -- dossier CHE-105.805.649           # Generate AI dossier
+cargo run --example vynco_cli -- compare CHE-105.805.649 CHE-109.340.740  # Compare companies
 cargo run --example vynco_cli -- credits                           # Credit balance
 cargo run --example vynco_cli -- team                              # Team info
 cargo run --example vynco_cli -- changes --page 1 --page-size 10  # Recent SOGC changes

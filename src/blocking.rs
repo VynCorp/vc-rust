@@ -479,8 +479,7 @@ impl Teams<'_> {
     }
 
     pub fn create(&self, req: &CreateTeamRequest) -> Result<Response<Team>> {
-        self.client
-            .block_on(self.client.inner.teams().create(req))
+        self.client.block_on(self.client.inner.teams().create(req))
     }
 
     pub fn members(&self) -> Result<Response<Vec<TeamMember>>> {
@@ -639,7 +638,6 @@ impl Graph<'_> {
         &self,
         req: &NetworkAnalysisRequest,
     ) -> Result<Response<NetworkAnalysisResponse>> {
-        self.client
-            .block_on(self.client.inner.graph().analyze(req))
+        self.client.block_on(self.client.inner.graph().analyze(req))
     }
 }

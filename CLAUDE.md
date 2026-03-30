@@ -64,8 +64,8 @@ cargo test -- --nocapture      # Run tests with stdout visible
 
 ### Serde Conventions
 
-- `#[serde(rename_all = "camelCase")]` on `Company` and `PagedResponse<T>` (API returns camelCase for these types)
-- Other response types use snake_case natively (no `rename_all` needed)
+- `#[serde(rename_all = "camelCase")]` on all API response types (Company, PagedResponse, and all new v2 types)
+- Request parameter types use snake_case (no rename_all) since query params are built manually
 - `#[serde(default)]` on fields that may be absent
 - `#[serde(skip_serializing_if = "Option::is_none")]` on optional request params
 

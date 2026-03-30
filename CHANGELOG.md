@@ -9,26 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2026-03-30
 
+Major version — SDK rewritten to align with the new Rust-based VynCo API.
+
 ### Added
 
-- 6 new resource modules (22 endpoints): auditors, dashboard, screening, watchlists, webhooks, exports, ai
-- 9 new resource modules (41 endpoints): api_keys, credits, teams, billing, changes, persons, analytics, dossiers, graph
-- 8 new company sub-endpoints: statistics, compare, news, reports, relationships, hierarchy, fingerprint, nearby
-- `Client::request_bytes()` for binary file downloads
-- `ExportFile` type for downloaded export data
+- **18 resource modules** covering 69 endpoints:
+  - `companies` — list, get, count, events, statistics, compare, news, reports, relationships, hierarchy, fingerprint, nearby
+  - `auditors` — history, tenures
+  - `dashboard` — get
+  - `screening` — screen
+  - `watchlists` — list, create, delete, companies, add_companies, remove_company, events
+  - `webhooks` — list, create, update, delete, test, deliveries
+  - `exports` — create, get, download
+  - `ai` — dossier, search, risk_score
+  - `api_keys` — list, create, revoke
+  - `credits` — balance, usage, history
+  - `billing` — create_checkout, create_portal
+  - `teams` — me, create, members, invite_member, update_member_role, remove_member, billing_summary
+  - `changes` — list, by_company, statistics
+  - `persons` — board_members
+  - `analytics` — statistics, cantons, auditors, cluster, anomalies, rfm_segments, cohorts, candidates
+  - `dossiers` — create, list, get, delete
+  - `graph` — get, export, analyze
+  - `health` — check
+- `Client::request_bytes()` for binary file downloads (exports, graph XML)
+- `ExportFile` type for downloaded export data with content-type and filename
 - Company events via `companies().events(uid, limit)` (CloudEvents format)
-- `ErrorBody.instance` field (RFC 7807)
+- Network graph and analysis endpoints
+- Sanctions screening against SECO, FINMA, OpenSanctions
+- AI-powered dossier generation, natural language search, multi-signal risk scoring
 
-### Changed
+### Changed (from v1.0.0)
 
-- Base URL: `https://api.vynco.ch/api/v1` → `https://api.vynco.ch`
-- Serde: Dropped `rename_all = "camelCase"` — API uses snake_case natively
-- `HealthResponse`: now `status`, `database`, `redis`, `version` (was `status`, `uptime`, `checks`)
-- `Company`: removed `address`, `purpose`; added `share_capital`, `industry`; fields now `Option<String>`
-- `PagedResponse<T>`: `total_count: u64` → `total: i64`, `page_size: u32` → `page_size: i64`
-- `CompanyListParams`: removed `status`, `auditor_category`, `sort_by`, `sort_desc`, `target_status`; added `changed_since`; page types i64
-- `ErrorBody`: `detail: String` → `Option<String>`; removed `message`; added `instance: Option<String>`
-- Companies `count()` no longer takes params
+- **Base URL**: `https://api.vynco.ch/api/v1` → `https://api.vynco.ch`
+- **`Company`**: fields now `Option<String>`; added `share_capital`, `industry`; removed `address`, `purpose`
+- **`Company` + `PagedResponse<T>`**: now use `#[serde(rename_all = "camelCase")]`
+- **`PagedResponse<T>`**: `total_count: u64` → `total: i64`
+- **`HealthResponse`**: now `status`, `database`, `redis`, `version` (was `status`, `uptime`, `checks`)
+- **`ErrorBody`**: `detail` is now `Option<String>`; removed `message`; added `instance`
+- **`ResponseMeta`**: fixed `X-RateLimit-Limit` header name (was `X-Rate-Limit-Limit`)
 
 ### Removed
 
