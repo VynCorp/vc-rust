@@ -11,8 +11,8 @@ pub mod blocking;
 pub use client::{Client, ClientBuilder};
 pub use error::{ErrorBody, VyncoError};
 pub use resources::{
-    Ai, Auditors, Companies, Dashboard, ExportFile, Exports, Health, Screening, Watchlists,
-    Webhooks,
+    Ai, Analytics, ApiKeys, Auditors, Billing, Changes, Companies, Credits, Dashboard, Dossiers,
+    ExportFile, Exports, Graph, Health, Persons, Screening, Teams, Watchlists, Webhooks,
 };
 pub use response::{Response, ResponseMeta};
 pub use types::*;

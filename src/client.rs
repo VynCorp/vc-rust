@@ -131,6 +131,42 @@ impl Client {
         Ai::new(self)
     }
 
+    pub fn api_keys(&self) -> ApiKeys<'_> {
+        ApiKeys::new(self)
+    }
+
+    pub fn credits(&self) -> Credits<'_> {
+        Credits::new(self)
+    }
+
+    pub fn teams(&self) -> Teams<'_> {
+        Teams::new(self)
+    }
+
+    pub fn billing(&self) -> Billing<'_> {
+        Billing::new(self)
+    }
+
+    pub fn changes(&self) -> Changes<'_> {
+        Changes::new(self)
+    }
+
+    pub fn persons(&self) -> Persons<'_> {
+        Persons::new(self)
+    }
+
+    pub fn analytics(&self) -> Analytics<'_> {
+        Analytics::new(self)
+    }
+
+    pub fn dossiers(&self) -> Dossiers<'_> {
+        Dossiers::new(self)
+    }
+
+    pub fn graph(&self) -> Graph<'_> {
+        Graph::new(self)
+    }
+
     // -- Internal request methods --------------------------------------------
 
     pub(crate) fn url(&self, path: &str) -> String {
