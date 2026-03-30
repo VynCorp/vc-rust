@@ -7,7 +7,7 @@ use crate::error::{ErrorBody, Result, VyncoError};
 use crate::resources::*;
 use crate::response::{Response, ResponseMeta};
 
-const DEFAULT_BASE_URL: &str = "https://api.vynco.ch/api/v1";
+const DEFAULT_BASE_URL: &str = "https://api.vynco.ch";
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 const DEFAULT_MAX_RETRIES: u32 = 2;
 
@@ -29,7 +29,7 @@ impl ClientBuilder {
         }
     }
 
-    /// Set the API base URL (default: `https://api.vynco.ch/api/v1`).
+    /// Set the API base URL (default: `https://api.vynco.ch`).
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
         self.base_url = url.into();
         self
@@ -95,60 +95,40 @@ impl Client {
 
     // -- Resource accessors --------------------------------------------------
 
+    pub fn health(&self) -> Health<'_> {
+        Health::new(self)
+    }
+
     pub fn companies(&self) -> Companies<'_> {
         Companies::new(self)
     }
 
-    pub fn persons(&self) -> Persons<'_> {
-        Persons::new(self)
+    pub fn auditors(&self) -> Auditors<'_> {
+        Auditors::new(self)
     }
 
-    pub fn dossiers(&self) -> Dossiers<'_> {
-        Dossiers::new(self)
+    pub fn dashboard(&self) -> Dashboard<'_> {
+        Dashboard::new(self)
     }
 
-    pub fn changes(&self) -> Changes<'_> {
-        Changes::new(self)
+    pub fn screening(&self) -> Screening<'_> {
+        Screening::new(self)
     }
 
-    pub fn analytics(&self) -> Analytics<'_> {
-        Analytics::new(self)
+    pub fn watchlists(&self) -> Watchlists<'_> {
+        Watchlists::new(self)
     }
 
-    pub fn api_keys(&self) -> ApiKeys<'_> {
-        ApiKeys::new(self)
+    pub fn webhooks(&self) -> Webhooks<'_> {
+        Webhooks::new(self)
     }
 
-    pub fn credits(&self) -> Credits<'_> {
-        Credits::new(self)
+    pub fn exports(&self) -> Exports<'_> {
+        Exports::new(self)
     }
 
-    pub fn billing(&self) -> Billing<'_> {
-        Billing::new(self)
-    }
-
-    pub fn watches(&self) -> Watches<'_> {
-        Watches::new(self)
-    }
-
-    pub fn news(&self) -> News<'_> {
-        News::new(self)
-    }
-
-    pub fn reports(&self) -> Reports<'_> {
-        Reports::new(self)
-    }
-
-    pub fn relationships(&self) -> Relationships<'_> {
-        Relationships::new(self)
-    }
-
-    pub fn teams(&self) -> Teams<'_> {
-        Teams::new(self)
-    }
-
-    pub fn health(&self) -> Health<'_> {
-        Health::new(self)
+    pub fn ai(&self) -> Ai<'_> {
+        Ai::new(self)
     }
 
     // -- Internal request methods --------------------------------------------
@@ -205,6 +185,45 @@ impl Client {
         } else {
             Err(self.map_error(status, resp).await)
         }
+    }
+
+    /// Send a request and return raw bytes (e.g. file downloads).
+    /// Returns `(bytes, meta, content_type, filename)`.
+    pub(crate) async fn request_bytes(
+        &self,
+        method: Method,
+        path: &str,
+    ) -> Result<(Vec<u8>, ResponseMeta, String, String)> {
+        let resp = self
+            .execute_raw(self.http.request(method.clone(), self.url(path)))
+            .await?;
+        let meta = ResponseMeta::from_headers(resp.headers());
+        let status = resp.status();
+
+        let content_type = resp
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream")
+            .to_string();
+
+        let filename = resp
+            .headers()
+            .get(header::CONTENT_DISPOSITION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| {
+                v.split("filename=")
+                    .nth(1)
+                    .map(|f| f.trim_matches('"').to_string())
+            })
+            .unwrap_or_default();
+
+        if !status.is_success() {
+            return Err(self.map_error(status, resp).await);
+        }
+
+        let bytes = resp.bytes().await.map_err(VyncoError::Http)?.to_vec();
+        Ok((bytes, meta, content_type, filename))
     }
 
     /// Execute a request with retry logic, returning the deserialized body + metadata.
@@ -311,29 +330,4 @@ impl Client {
         }
     }
 
-    /// Extract a list from a flexible JSON response (bare array, `{"data": [...]}`,
-    /// or first array-valued key).
-    pub(crate) fn extract_list<T: DeserializeOwned>(value: serde_json::Value) -> Result<Vec<T>> {
-        if let serde_json::Value::Array(arr) = &value {
-            return Ok(serde_json::from_value(serde_json::Value::Array(
-                arr.clone(),
-            ))?);
-        }
-
-        if let serde_json::Value::Object(map) = &value {
-            if let Some(data) = map.get("data") {
-                if let serde_json::Value::Array(_) = data {
-                    return Ok(serde_json::from_value(data.clone())?);
-                }
-            }
-            // Fall back to first array-valued key
-            for (_key, val) in map {
-                if let serde_json::Value::Array(_) = val {
-                    return Ok(serde_json::from_value(val.clone())?);
-                }
-            }
-        }
-
-        Ok(serde_json::from_value(value)?)
-    }
 }
