@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// Generic paginated response wrapper.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PagedResponse<T> {
     #[serde(default)]
     pub items: Vec<T>,
@@ -40,6 +41,7 @@ pub struct HealthResponse {
 
 /// A Swiss company record.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Company {
     pub uid: String,
     pub name: String,

@@ -40,7 +40,7 @@ impl ResponseMeta {
                 .and_then(|v| v.to_str().ok())
                 .and_then(|v| v.parse().ok()),
             rate_limit_limit: headers
-                .get("X-Rate-Limit-Limit")
+                .get("X-RateLimit-Limit")
                 .and_then(|v| v.to_str().ok())
                 .and_then(|v| v.parse().ok()),
             rate_limit_remaining: headers

@@ -84,7 +84,7 @@ mod tests {
             )
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"items":[{"id":"t1","company_uid":"CHE-100.023.968","company_name":"Test AG","auditor_name":"KPMG AG","tenure_years":11.2,"is_current":true,"source":"ZefixRest"}],"total":1,"page":1,"page_size":50}"#)
+            .with_body(r#"{"items":[{"id":"t1","company_uid":"CHE-100.023.968","company_name":"Test AG","auditor_name":"KPMG AG","tenure_years":11.2,"is_current":true,"source":"ZefixRest"}],"total":1,"page":1,"pageSize":50}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

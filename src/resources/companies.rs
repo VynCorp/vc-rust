@@ -82,7 +82,7 @@ mod tests {
             .mock("GET", "/v1/companies?canton=ZH&page=1&pageSize=20")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"items":[{"uid":"CHE-100.023.968","name":"Test AG","canton":"ZH","status":"active"}],"total":1,"page":1,"page_size":20}"#)
+            .with_body(r#"{"items":[{"uid":"CHE-100.023.968","name":"Test AG","canton":"ZH","status":"active"}],"total":1,"page":1,"pageSize":20}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -108,7 +108,7 @@ mod tests {
             .mock("GET", "/v1/companies/CHE-100.023.968")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"uid":"CHE-100.023.968","name":"Test AG","canton":"ZH","status":"active","share_capital":100000.0}"#)
+            .with_body(r#"{"uid":"CHE-100.023.968","name":"Test AG","canton":"ZH","status":"active","shareCapital":100000.0}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

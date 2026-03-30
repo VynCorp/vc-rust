@@ -55,7 +55,8 @@ cargo test -- --nocapture      # Run tests with stdout visible
 
 ### Serde Conventions
 
-- No `rename_all` needed — API uses snake_case natively (matching Rust field names)
+- `#[serde(rename_all = "camelCase")]` on `Company` and `PagedResponse<T>` (API returns camelCase for these types)
+- Other response types use snake_case natively (no `rename_all` needed)
 - `#[serde(default)]` on fields that may be absent
 - `#[serde(skip_serializing_if = "Option::is_none")]` on optional request params
 
