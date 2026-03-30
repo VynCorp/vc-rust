@@ -348,7 +348,7 @@ pub struct AddCompaniesResponse {
 // ---------------------------------------------------------------------------
 
 /// A webhook subscription.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct WebhookSubscription {
     pub id: String,
     #[serde(default)]
@@ -456,7 +456,7 @@ pub struct CreateExportRequest {
 }
 
 /// An export job record.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct ExportJob {
     pub id: String,
     #[serde(default)]
