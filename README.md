@@ -7,21 +7,21 @@
 
 Rust SDK for the [VynCo](https://vynco.ch) Swiss Corporate Intelligence API.
 
-Access 320,000+ Swiss companies from the Zefix commercial registry with full-text search,
-change tracking, relationship mapping, AI-generated dossiers, and advanced analytics.
+Access 500,000+ Swiss companies with event tracking, sanctions screening, AI-powered analysis,
+watchlists, webhooks, and bulk data exports.
 
 ## Installation
 
 ```toml
 [dependencies]
-vynco = "1.0"
+vynco = "2.0"
 ```
 
 For the synchronous (blocking) client:
 
 ```toml
 [dependencies]
-vynco = { version = "1.0", features = ["blocking"] }
+vynco = { version = "2.0", features = ["blocking"] }
 ```
 
 ## Quick Start
@@ -41,23 +41,26 @@ async fn main() -> Result<(), vynco::VyncoError> {
         ..Default::default()
     };
     let resp = client.companies().list(&params).await?;
-    println!("Found {} companies", resp.data.total_count);
+    println!("Found {} companies", resp.data.total);
     println!("Credits used: {:?}", resp.meta.credits_used);
 
     // Get company by UID
-    let company = client.companies().get("CHE-100.023.968").await?;
-    println!("{}: {}", company.data.name, company.data.purpose);
+    let company = client.companies().get("CHE-105.805.080").await?;
+    println!("{}: {:?}", company.data.name, company.data.legal_form);
 
-    // Full-text search (FTS5)
-    let results = client.companies().search(&vynco::CompanySearchRequest {
-        query: "pharma".into(),
-        limit: Some(10),
+    // Sanctions screening
+    let screening = client.screening().screen(&vynco::ScreeningRequest {
+        name: "Novartis AG".into(),
+        uid: None,
+        sources: None,
     }).await?;
-    println!("Search returned {} results", results.data.len());
+    println!("Risk level: {}", screening.data.risk_level);
 
-    // Check credit balance
-    let balance = client.credits().balance().await?;
-    println!("Balance: {} credits", balance.data.balance);
+    // AI risk score
+    let risk = client.ai().risk_score(&vynco::RiskScoreRequest {
+        uid: "CHE-105.805.080".into(),
+    }).await?;
+    println!("Risk score: {}/100", risk.data.overall_score);
 
     Ok(())
 }
@@ -72,8 +75,8 @@ fn main() -> Result<(), vynco::VyncoError> {
     let client = Client::builder("vc_live_your_api_key")
         .build()?;
 
-    let balance = client.credits().balance()?;
-    println!("Balance: {} credits", balance.data.balance);
+    let count = client.companies().count()?;
+    println!("Companies: {}", count.data.count);
 
     Ok(())
 }
@@ -81,31 +84,26 @@ fn main() -> Result<(), vynco::VyncoError> {
 
 ## API Coverage
 
-14 resource modules covering 52 endpoints:
+9 resource modules covering 28 endpoints:
 
-| Resource | Methods | Credits |
-|----------|---------|---------|
-| `companies()` | `list`, `get`, `count`, `statistics`, `search`, `batch`, `compare` | 1-5 |
-| `changes()` | `list`, `by_company`, `statistics`, `by_sogc`, `review`, `batch` | 0-2 |
-| `persons()` | `list`, `get`, `roles`, `connections`, `board_members`, `network_stats` | 3-10 |
-| `dossiers()` | `list`, `get`, `generate`, `statistics` | 0-100 |
-| `relationships()` | `for_company`, `hierarchy` | 10 |
-| `news()` | `for_company`, `recent` | 1-2 |
-| `reports()` | `for_company` | 5 |
-| `analytics()` | `cluster`, `anomalies`, `cohorts`, `cantons`, `auditors`, `rfm_segments`, `velocity` | 3-25 |
-| `watches()` | `list`, `create`, `remove`, `notifications` | 0 |
-| `api_keys()` | `list`, `create`, `revoke` | 0 |
-| `credits()` | `balance`, `usage`, `history` | 0 |
-| `billing()` | `create_checkout`, `create_portal` | 0 |
-| `teams()` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary` | 0 |
-| `health()` | `check` | 0 |
+| Resource | Methods |
+|----------|---------|
+| `health()` | `check` |
+| `companies()` | `list`, `get`, `count`, `events` |
+| `auditors()` | `history`, `tenures` |
+| `dashboard()` | `get` |
+| `screening()` | `screen` |
+| `watchlists()` | `list`, `create`, `delete`, `companies`, `add_companies`, `remove_company`, `events` |
+| `webhooks()` | `list`, `create`, `update`, `delete`, `test`, `deliveries` |
+| `exports()` | `create`, `get`, `download` |
+| `ai()` | `dossier`, `search`, `risk_score` |
 
 ## Response Metadata
 
 Every response includes header metadata for credit tracking and rate limiting:
 
 ```rust
-let resp = client.companies().get("CHE-100.023.968").await?;
+let resp = client.companies().get("CHE-105.805.080").await?;
 
 println!("Request ID: {:?}", resp.meta.request_id);         // X-Request-Id
 println!("Credits used: {:?}", resp.meta.credits_used);      // X-Credits-Used
@@ -124,14 +122,14 @@ A full CLI example is included to demonstrate real-world SDK usage:
 export VYNCO_API_KEY="vc_live_your_api_key"
 
 cargo run --example vynco_cli -- health                            # API health check
-cargo run --example vynco_cli -- credits                           # Credit balance
-cargo run --example vynco_cli -- team                              # Team info
 cargo run --example vynco_cli -- companies --canton ZH --search "Novartis"  # List with filters
-cargo run --example vynco_cli -- search "pharmaceutical"           # Full-text search
 cargo run --example vynco_cli -- company CHE-105.805.649           # Lookup by UID
-cargo run --example vynco_cli -- count --canton GE                 # Count companies
-cargo run --example vynco_cli -- stats                             # Database statistics
-cargo run --example vynco_cli -- changes                           # Recent changes
+cargo run --example vynco_cli -- count                             # Count companies
+cargo run --example vynco_cli -- events CHE-105.805.649 --limit 10 # Company events
+cargo run --example vynco_cli -- screen "Test Corp"                # Sanctions screening
+cargo run --example vynco_cli -- dashboard                         # Admin dashboard
+cargo run --example vynco_cli -- auditors --min-years 10 --canton ZH  # Long-tenure auditors
+cargo run --example vynco_cli -- risk CHE-105.805.649              # AI risk score
 ```
 
 See [`examples/vynco_cli.rs`](examples/vynco_cli.rs) for the full source.
@@ -142,9 +140,9 @@ See [`examples/vynco_cli.rs`](examples/vynco_cli.rs) for the full source.
 use std::time::Duration;
 
 let client = Client::builder("vc_live_your_api_key")
-    .base_url("https://api.vynco.ch/api/v1")  // default
-    .timeout(Duration::from_secs(60))           // default: 30s
-    .max_retries(3)                             // default: 2
+    .base_url("https://api.vynco.ch")              // default
+    .timeout(Duration::from_secs(60))               // default: 30s
+    .max_retries(3)                                 // default: 2
     .build()?;
 ```
 
@@ -163,8 +161,8 @@ match client.companies().get("CHE-000.000.000").await {
     Err(VyncoError::Authentication(_)) => println!("Invalid API key"),
     Err(VyncoError::InsufficientCredits(_)) => println!("Top up credits"),
     Err(VyncoError::Forbidden(_)) => println!("Insufficient permissions"),
-    Err(VyncoError::NotFound(body)) => println!("Not found: {}", body.detail),
-    Err(VyncoError::Validation(body)) => println!("Bad request: {}", body.detail),
+    Err(VyncoError::NotFound(body)) => println!("Not found: {:?}", body.detail),
+    Err(VyncoError::Validation(body)) => println!("Bad request: {:?}", body.detail),
     Err(VyncoError::Conflict(_)) => println!("Resource conflict"),
     Err(VyncoError::RateLimit(_)) => println!("Rate limited, retry later"),
     Err(VyncoError::Server(_)) => println!("Server error"),
@@ -173,7 +171,7 @@ match client.companies().get("CHE-000.000.000").await {
 ```
 
 Error bodies follow [RFC 7807 Problem Details](https://tools.ietf.org/html/rfc7807) with
-`error_type`, `title`, `detail`, `status`, and `message` fields.
+`error_type`, `title`, `status`, `detail`, and `instance` fields.
 
 ## Feature Flags
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Rust SDK (`vynco` crate) for the VynCo Swiss Corporate Intelligence API. Covers 52 public API endpoints across 14 resource modules. Aligned with the VynCo OpenAPI 1.0.0 specification.
+Rust SDK (`vynco` crate) for the VynCo Swiss Corporate Intelligence API. Covers 28 public API endpoints across 9 resource modules. Aligned with the VynCo OpenAPI 2.0.0 specification.
 
 ## Commands
 
@@ -22,46 +22,40 @@ cargo test -- --nocapture      # Run tests with stdout visible
 
 ### Key Patterns
 
-**Resource borrowing:** All 14 resources borrow `&Client` via lifetime `'a`. No cloning. Access via `client.companies().list(params).await?`.
+**Resource borrowing:** All 9 resources borrow `&Client` via lifetime `'a`. No cloning. Access via `client.companies().list(params).await?`.
 
 **Response wrapper:** Every API call returns `Response<T>` containing both `data: T` and `meta: ResponseMeta` (parsed from `X-Request-Id`, `X-Credits-Used`, `X-Credits-Remaining`, `X-Rate-Limit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `X-Data-Source` headers).
 
-**Four request methods on Client** (all `pub(crate)`):
+**Five request methods on Client** (all `pub(crate)`):
 - `request<T>()` — GET with no body
 - `request_with_body<T, B>()` — POST/PUT with JSON body
 - `request_with_params<T>()` — GET with query parameters
 - `request_empty()` — DELETE, returns only `ResponseMeta`
+- `request_bytes()` — GET returning raw bytes for export downloads
 
 **Retry logic:** Exponential backoff (500ms × 2^attempt) on HTTP 429 and 5xx. Respects `Retry-After` header. Configurable via `max_retries` (default: 2).
 
-**Flexible list extraction:** `Client::extract_list<T>()` handles three API response shapes: bare JSON arrays, `{"data": [...]}`, or first array-valued key in an object.
-
 **Blocking client:** `src/blocking.rs` wraps the async client with a single-threaded Tokio runtime. Each resource gets a synchronous wrapper that calls `block_on()`. Behind `blocking` feature flag. Cannot be used from within an existing async context.
 
-**Error mapping:** HTTP status → `VyncoError` variant: 401→Authentication, 402→InsufficientCredits, 403→Forbidden, 404→NotFound, 400/422→Validation, 409→Conflict, 429→RateLimit, 5xx→Server. Error bodies follow RFC 7807 ProblemDetails with `error_type`, `title`, `detail`, `message`, `status` fields.
+**Error mapping:** HTTP status → `VyncoError` variant: 401→Authentication, 402→InsufficientCredits, 403→Forbidden, 404→NotFound, 400/422→Validation, 409→Conflict, 429→RateLimit, 5xx→Server. Error bodies follow RFC 7807 ProblemDetails with `error_type`, `title`, `status`, `detail` (`Option<String>`), and `instance` (`Option<String>`) fields.
 
-### Resources (14 modules, 52 endpoints)
+### Resources (9 modules, 28 endpoints)
 
 | Resource | Endpoints |
 |----------|-----------|
-| `companies` | `list`, `get`, `count`, `statistics`, `search` (FTS), `batch`, `compare` |
-| `changes` | `list`, `by_company`, `statistics`, `by_sogc`, `review`, `batch` |
-| `persons` | `list`, `get`, `roles`, `connections`, `board_members`, `network_stats` |
-| `dossiers` | `list`, `get`, `generate`, `statistics` |
-| `relationships` | `for_company`, `hierarchy` |
-| `news` | `for_company`, `recent` |
-| `reports` | `for_company` |
-| `analytics` | `cluster`, `anomalies`, `cohorts`, `cantons`, `auditors`, `rfm_segments`, `velocity` |
-| `watches` | `list`, `create`, `remove`, `notifications` |
-| `api_keys` | `list`, `create`, `revoke` |
-| `credits` | `balance`, `usage`, `history` |
-| `billing` | `create_checkout`, `create_portal` |
-| `teams` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary` |
 | `health` | `check` |
+| `companies` | `list`, `get`, `count`, `events` |
+| `auditors` | `history`, `tenures` |
+| `dashboard` | `get` |
+| `screening` | `screen` |
+| `watchlists` | `list`, `create`, `delete`, `companies`, `add_companies`, `remove_company`, `events` |
+| `webhooks` | `list`, `create`, `update`, `delete`, `test`, `deliveries` |
+| `exports` | `create`, `get`, `download` |
+| `ai` | `dossier`, `search`, `risk_score` |
 
 ### Serde Conventions
 
-- `#[serde(rename_all = "camelCase")]` on all types (API uses camelCase)
+- No `rename_all` needed — API uses snake_case natively (matching Rust field names)
 - `#[serde(default)]` on fields that may be absent
 - `#[serde(skip_serializing_if = "Option::is_none")]` on optional request params
 
@@ -84,7 +78,7 @@ Set `max_retries(0)` when testing error status codes to avoid retry delays.
 
 ## API Details
 
-- **Base URL:** `https://api.vynco.ch/api/v1`
+- **Base URL:** `https://api.vynco.ch` (health at `/health`, all other endpoints at `/v1/...`)
 - **Auth:** Bearer tokens — API keys (`vc_live_*` production, `vc_test_*` sandbox) or Entra ID JWTs
 - **OpenAPI spec:** Located at `/home/michael/DEV/Repos/ZefixMiner/EY.EW.ASU.ZefixMiner/src/ZefixMiner.Functions.Api/openapi.json`
 - **Design spec:** `docs/superpowers/specs/2026-03-17-vynco-rust-sdk-design.md`

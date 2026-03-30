@@ -7,11 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-30
+
 ### Added
 
-- **Example CLI app** (`examples/vynco_cli.rs`): interactive command-line tool demonstrating
-  health checks, credit balance, team info, company listing/search/lookup/count, statistics,
-  and change tracking — serves as both an integration test and a usage reference
+- 6 new resource modules (22 endpoints): auditors, dashboard, screening, watchlists, webhooks, exports, ai
+- `Client::request_bytes()` for binary file downloads
+- `ExportFile` type for downloaded export data
+- Company events via `companies().events(uid, limit)` (CloudEvents format)
+- `ErrorBody.instance` field (RFC 7807)
+
+### Changed
+
+- Base URL: `https://api.vynco.ch/api/v1` → `https://api.vynco.ch`
+- Serde: Dropped `rename_all = "camelCase"` — API uses snake_case natively
+- `HealthResponse`: now `status`, `database`, `redis`, `version` (was `status`, `uptime`, `checks`)
+- `Company`: removed `address`, `purpose`; added `share_capital`, `industry`; fields now `Option<String>`
+- `PagedResponse<T>`: `total_count: u64` → `total: i64`, `page_size: u32` → `page_size: i64`
+- `CompanyListParams`: removed `status`, `auditor_category`, `sort_by`, `sort_desc`, `target_status`; added `changed_since`; page types i64
+- `ErrorBody`: `detail: String` → `Option<String>`; removed `message`; added `instance: Option<String>`
+- Companies `count()` no longer takes params
+
+### Removed
+
+- 12 resource modules: analytics, api_keys, billing, changes, credits, dossiers, news, persons, relationships, reports, teams, watches
+- `Client::extract_list()`
+- All v1-only types
 
 ## [1.0.0] - 2026-03-18
 
@@ -73,5 +94,6 @@ Initial release (draft API).
 - TLS backend selection (rustls default, native-tls optional)
 - 12 integration tests with mockito
 
+[2.0.0]: https://github.com/VynCorp/vc-rust/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/VynCorp/vc-rust/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/VynCorp/vc-rust/releases/tag/v0.1.0
