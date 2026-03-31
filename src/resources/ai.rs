@@ -44,7 +44,7 @@ mod tests {
             .mock("POST", "/v1/ai/dossier")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"uid":"CHE-100.023.968","company_name":"Test AG","dossier":"Test AG is a Swiss company...","sources":["zefix","seco"],"generated_at":"2026-03-30T12:00:00Z"}"#)
+            .with_body(r#"{"uid":"CHE-100.023.968","companyName":"Test AG","dossier":"Test AG is a Swiss company...","sources":["zefix","seco"],"generatedAt":"2026-03-30T12:00:00Z"}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -68,7 +68,7 @@ mod tests {
             .mock("POST", "/v1/ai/search")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"query":"pharma in Zurich","explanation":"Searching for pharma in ZH","filters_applied":{},"results":[{"uid":"CHE-100.023.968","name":"Test Pharma AG"}],"total":1}"#)
+            .with_body(r#"{"query":"pharma in Zurich","explanation":"Searching for pharma in ZH","filtersApplied":{},"results":[{"uid":"CHE-100.023.968","name":"Test Pharma AG"}],"total":1}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -91,7 +91,7 @@ mod tests {
             .mock("POST", "/v1/ai/risk-score")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"uid":"CHE-100.023.968","company_name":"Test AG","overall_score":25,"risk_level":"low","breakdown":[{"factor":"Sanctions","score":0,"weight":0.35,"description":"No hits"}],"assessed_at":"2026-03-30T12:00:00Z"}"#)
+            .with_body(r#"{"uid":"CHE-100.023.968","companyName":"Test AG","overallScore":25,"riskLevel":"low","breakdown":[{"factor":"Sanctions","score":0,"weight":0.35,"description":"No hits"}],"assessedAt":"2026-03-30T12:00:00Z"}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

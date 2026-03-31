@@ -60,7 +60,7 @@ mod tests {
             .mock("POST", "/v1/exports")
             .with_status(202)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"id":"exp-123","status":"pending","format":"ndjson","total_rows":null,"file_size_bytes":null,"error_message":null,"created_at":"2026-03-30T12:00:00Z","completed_at":null,"expires_at":null}"#)
+            .with_body(r#"{"id":"exp-123","status":"pending","format":"ndjson","totalRows":null,"fileSizeBytes":null,"errorMessage":null,"createdAt":"2026-03-30T12:00:00Z","completedAt":null,"expiresAt":null}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -85,7 +85,7 @@ mod tests {
             .mock("GET", "/v1/exports/exp-123")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"job":{"id":"exp-123","status":"completed","format":"ndjson","total_rows":100,"file_size_bytes":5000,"created_at":"2026-03-30T12:00:00Z","completed_at":"2026-03-30T12:01:00Z"},"data":null}"#)
+            .with_body(r#"{"job":{"id":"exp-123","status":"completed","format":"ndjson","totalRows":100,"fileSizeBytes":5000,"createdAt":"2026-03-30T12:00:00Z","completedAt":"2026-03-30T12:01:00Z"},"data":null}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

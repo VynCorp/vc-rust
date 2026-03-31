@@ -82,7 +82,7 @@ mod tests {
             .mock("POST", "/v1/watchlists")
             .with_status(201)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"id":"wl-123","name":"My Watchlist","description":"Test","created_at":"2026-03-30T12:00:00Z","updated_at":"2026-03-30T12:00:00Z"}"#)
+            .with_body(r#"{"id":"wl-123","name":"My Watchlist","description":"Test","createdAt":"2026-03-30T12:00:00Z","updatedAt":"2026-03-30T12:00:00Z"}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -105,7 +105,7 @@ mod tests {
             .mock("GET", "/v1/watchlists")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"[{"id":"wl-123","name":"My Watchlist","description":"","company_count":5,"created_at":"2026-03-30T12:00:00Z"}]"#)
+            .with_body(r#"[{"id":"wl-123","name":"My Watchlist","description":"","companyCount":5,"createdAt":"2026-03-30T12:00:00Z"}]"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

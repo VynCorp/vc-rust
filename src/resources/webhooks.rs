@@ -80,7 +80,7 @@ mod tests {
             .mock("POST", "/v1/webhooks")
             .with_status(201)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"webhook":{"id":"wh-123","url":"https://example.com/hook","description":"Test","event_filters":["auditor_change"],"company_filters":[],"status":"active","created_at":"2026-03-30T12:00:00Z","updated_at":"2026-03-30T12:00:00Z"},"signing_secret":"whsec_abc123"}"#)
+            .with_body(r#"{"webhook":{"id":"wh-123","url":"https://example.com/hook","description":"Test","eventFilters":["auditor_change"],"companyFilters":[],"status":"active","createdAt":"2026-03-30T12:00:00Z","updatedAt":"2026-03-30T12:00:00Z"},"signingSecret":"whsec_abc123"}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -106,7 +106,7 @@ mod tests {
             .mock("PUT", "/v1/webhooks/wh-123")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"id":"wh-123","url":"https://example.com/hook","description":"Updated","event_filters":[],"company_filters":[],"status":"paused","created_at":"2026-03-30T12:00:00Z","updated_at":"2026-03-30T13:00:00Z"}"#)
+            .with_body(r#"{"id":"wh-123","url":"https://example.com/hook","description":"Updated","eventFilters":[],"companyFilters":[],"status":"paused","createdAt":"2026-03-30T12:00:00Z","updatedAt":"2026-03-30T13:00:00Z"}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -130,7 +130,7 @@ mod tests {
             .mock("POST", "/v1/webhooks/wh-123/test")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"success":true,"http_status":200,"error":null}"#)
+            .with_body(r#"{"success":true,"httpStatus":200,"error":null}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

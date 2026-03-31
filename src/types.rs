@@ -26,6 +26,7 @@ pub struct PagedResponse<T> {
 
 /// API health status response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HealthResponse {
     #[serde(default)]
     pub status: String,
@@ -63,48 +64,6 @@ pub struct Company {
     pub updated_at: Option<String>,
 }
 
-/// Company detail response (single company with extended fields).
-#[derive(Debug, Clone, Deserialize)]
-pub struct CompanyDetail {
-    pub uid: String,
-    pub name: String,
-    #[serde(default)]
-    pub canton: Option<String>,
-    #[serde(default)]
-    pub status: Option<String>,
-    #[serde(default)]
-    pub legal_form: Option<String>,
-    #[serde(default)]
-    pub share_capital: Option<f64>,
-    #[serde(default)]
-    pub industry: Option<String>,
-    #[serde(default)]
-    pub auditor_category: Option<String>,
-    #[serde(default)]
-    pub purpose: Option<String>,
-    #[serde(default)]
-    pub address: Option<String>,
-    #[serde(default)]
-    pub updated_at: Option<String>,
-}
-
-/// Request body for company search.
-#[derive(Debug, Clone, Serialize)]
-pub struct CompanySearchRequest {
-    pub query: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub limit: Option<usize>,
-}
-
-/// Response wrapper for company search results.
-#[derive(Debug, Clone, Deserialize)]
-pub struct CompanySearchResponse {
-    #[serde(default)]
-    pub data: Vec<CompanyDetail>,
-    #[serde(default)]
-    pub total: i64,
-}
-
 /// Query parameters for listing companies.
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct CompanyListParams {
@@ -122,6 +81,7 @@ pub struct CompanyListParams {
 
 /// Company count response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompanyCount {
     #[serde(default)]
     pub count: i64,
@@ -133,6 +93,7 @@ pub struct CompanyCount {
 
 /// Response wrapper for event listing.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EventListResponse {
     #[serde(default)]
     pub events: Vec<CompanyEvent>,
@@ -142,6 +103,7 @@ pub struct EventListResponse {
 
 /// A CloudEvent-style company event.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompanyEvent {
     pub id: String,
     #[serde(default)]
@@ -172,6 +134,7 @@ pub struct CompanyEvent {
 
 /// Auditor history for a company.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuditorHistoryResponse {
     pub company_uid: String,
     pub company_name: String,
@@ -183,6 +146,7 @@ pub struct AuditorHistoryResponse {
 
 /// A single auditor tenure record.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuditorTenure {
     pub id: String,
     #[serde(default)]
@@ -222,6 +186,7 @@ pub struct AuditorTenureParams {
 
 /// Admin dashboard response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DashboardResponse {
     #[serde(default)]
     pub generated_at: String,
@@ -235,6 +200,7 @@ pub struct DashboardResponse {
 
 /// Data completeness metrics.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DataCompleteness {
     #[serde(default)]
     pub total_companies: i64,
@@ -256,6 +222,7 @@ pub struct DataCompleteness {
 
 /// Pipeline run status.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PipelineStatus {
     pub name: String,
     #[serde(default)]
@@ -270,6 +237,7 @@ pub struct PipelineStatus {
 
 /// Auditor tenure aggregate statistics.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuditorTenureStats {
     #[serde(default)]
     pub total_tenures: i64,
@@ -297,6 +265,7 @@ pub struct ScreeningRequest {
 
 /// Screening result response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScreeningResponse {
     #[serde(default)]
     pub query_name: String,
@@ -316,6 +285,7 @@ pub struct ScreeningResponse {
 
 /// A single screening hit.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScreeningHit {
     #[serde(default)]
     pub source: String,
@@ -337,6 +307,7 @@ pub struct ScreeningHit {
 
 /// A watchlist.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Watchlist {
     pub id: String,
     pub name: String,
@@ -350,6 +321,7 @@ pub struct Watchlist {
 
 /// Watchlist summary (used in list responses).
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WatchlistSummary {
     pub id: String,
     pub name: String,
@@ -371,6 +343,7 @@ pub struct CreateWatchlistRequest {
 
 /// Response containing UIDs of companies in a watchlist.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WatchlistCompaniesResponse {
     #[serde(default)]
     pub uids: Vec<String>,
@@ -384,6 +357,7 @@ pub struct AddCompaniesRequest {
 
 /// Response from adding companies to a watchlist.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddCompaniesResponse {
     #[serde(default)]
     pub added: i64,
@@ -395,6 +369,7 @@ pub struct AddCompaniesResponse {
 
 /// A webhook subscription.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WebhookSubscription {
     pub id: String,
     #[serde(default)]
@@ -427,6 +402,7 @@ pub struct CreateWebhookRequest {
 
 /// Response from creating a webhook (includes signing secret).
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateWebhookResponse {
     #[serde(default)]
     pub webhook: WebhookSubscription,
@@ -451,6 +427,7 @@ pub struct UpdateWebhookRequest {
 
 /// Response from testing a webhook delivery.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TestDeliveryResponse {
     #[serde(default)]
     pub success: bool,
@@ -462,6 +439,7 @@ pub struct TestDeliveryResponse {
 
 /// A webhook delivery record.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WebhookDelivery {
     pub id: String,
     #[serde(default)]
@@ -503,6 +481,7 @@ pub struct CreateExportRequest {
 
 /// An export job record.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExportJob {
     pub id: String,
     #[serde(default)]
@@ -525,6 +504,7 @@ pub struct ExportJob {
 
 /// Export download response (job metadata + optional data).
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExportDownload {
     #[serde(default)]
     pub job: ExportJob,
@@ -546,6 +526,7 @@ pub struct DossierRequest {
 
 /// AI dossier response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DossierResponse {
     #[serde(default)]
     pub uid: String,
@@ -567,6 +548,7 @@ pub struct AiSearchRequest {
 
 /// AI search response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AiSearchResponse {
     #[serde(default)]
     pub query: String,
@@ -588,6 +570,7 @@ pub struct RiskScoreRequest {
 
 /// Risk score response.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RiskScoreResponse {
     #[serde(default)]
     pub uid: String,
@@ -605,6 +588,7 @@ pub struct RiskScoreResponse {
 
 /// A single risk factor in a risk score breakdown.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RiskFactor {
     #[serde(default)]
     pub factor: String,

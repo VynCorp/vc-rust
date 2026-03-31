@@ -275,12 +275,6 @@ impl Client {
             return Err(self.map_error(status, resp).await);
         }
 
-        // Handle 204 No Content
-        if status == StatusCode::NO_CONTENT {
-            let data: T = serde_json::from_value(serde_json::Value::Null)?;
-            return Ok(Response { data, meta });
-        }
-
         let data: T = resp.json().await.map_err(VyncoError::Http)?;
         Ok(Response { data, meta })
     }

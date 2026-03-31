@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 /// RFC 7807 Problem Details error body returned by the VynCo API.
 #[derive(Debug, Clone, Deserialize)]
+#[non_exhaustive]
 pub struct ErrorBody {
     #[serde(default, rename = "type")]
     pub error_type: String,
@@ -34,6 +35,7 @@ impl fmt::Display for ErrorBody {
 
 /// All errors that can occur when using the VynCo SDK.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum VyncoError {
     #[error("authentication error: {0}")]
     Authentication(ErrorBody),

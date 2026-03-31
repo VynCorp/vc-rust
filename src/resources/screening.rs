@@ -32,7 +32,7 @@ mod tests {
             .mock("POST", "/v1/screening")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"query_name":"Test Corp","query_uid":null,"screened_at":"2026-03-30T12:00:00Z","hit_count":0,"risk_level":"clear","hits":[],"sources_checked":["seco","opensanctions","finma"]}"#)
+            .with_body(r#"{"queryName":"Test Corp","queryUid":null,"screenedAt":"2026-03-30T12:00:00Z","hitCount":0,"riskLevel":"clear","hits":[],"sourcesChecked":["seco","opensanctions","finma"]}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -58,7 +58,7 @@ mod tests {
             .mock("POST", "/v1/screening")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"query_name":"Bad Corp","query_uid":null,"screened_at":"2026-03-30T12:00:00Z","hit_count":1,"risk_level":"high","hits":[{"source":"seco","matched_name":"Bad Corp Ltd","entity_type":"entity","score":0.95,"datasets":["seco-sanctions"],"details":{}}],"sources_checked":["seco"]}"#)
+            .with_body(r#"{"queryName":"Bad Corp","queryUid":null,"screenedAt":"2026-03-30T12:00:00Z","hitCount":1,"riskLevel":"high","hits":[{"source":"seco","matchedName":"Bad Corp Ltd","entityType":"entity","score":0.95,"datasets":["seco-sanctions"],"details":{}}],"sourcesChecked":["seco"]}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

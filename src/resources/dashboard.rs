@@ -30,7 +30,7 @@ mod tests {
             .mock("GET", "/v1/dashboard")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"generated_at":"2026-03-30T12:00:00Z","data":{"total_companies":507000,"with_canton":500000,"with_status":495000,"with_legal_form":490000,"with_capital":300000,"with_industry":200000,"with_auditor":150000,"completeness_pct":72.5},"pipelines":[],"auditor_tenures":{"total_tenures":45000,"long_tenures_7plus":3200,"avg_tenure_years":5.8,"max_tenure_years":42.0}}"#)
+            .with_body(r#"{"generatedAt":"2026-03-30T12:00:00Z","data":{"totalCompanies":507000,"withCanton":500000,"withStatus":495000,"withLegalForm":490000,"withCapital":300000,"withIndustry":200000,"withAuditor":150000,"completenessPct":72.5},"pipelines":[],"auditorTenures":{"totalTenures":45000,"longTenures7plus":3200,"avgTenureYears":5.8,"maxTenureYears":42.0}}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

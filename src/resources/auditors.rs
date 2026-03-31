@@ -60,7 +60,7 @@ mod tests {
             .mock("GET", "/v1/companies/CHE-100.023.968/auditor-history")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"company_uid":"CHE-100.023.968","company_name":"Test AG","current_auditor":{"id":"t1","company_uid":"CHE-100.023.968","company_name":"Test AG","auditor_name":"KPMG AG","appointed_at":"2020-01-01","tenure_years":6.2,"is_current":true,"source":"ZefixRest"},"history":[]}"#)
+            .with_body(r#"{"companyUid":"CHE-100.023.968","companyName":"Test AG","currentAuditor":{"id":"t1","companyUid":"CHE-100.023.968","companyName":"Test AG","auditorName":"KPMG AG","appointedAt":"2020-01-01","tenureYears":6.2,"isCurrent":true,"source":"ZefixRest"},"history":[]}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")
@@ -84,7 +84,7 @@ mod tests {
             )
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"items":[{"id":"t1","company_uid":"CHE-100.023.968","company_name":"Test AG","auditor_name":"KPMG AG","tenure_years":11.2,"is_current":true,"source":"ZefixRest"}],"total":1,"page":1,"pageSize":50}"#)
+            .with_body(r#"{"items":[{"id":"t1","companyUid":"CHE-100.023.968","companyName":"Test AG","auditorName":"KPMG AG","tenureYears":11.2,"isCurrent":true,"source":"ZefixRest"}],"total":1,"page":1,"pageSize":50}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

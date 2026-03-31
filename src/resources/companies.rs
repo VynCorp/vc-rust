@@ -275,7 +275,7 @@ mod tests {
             .mock("GET", "/v1/companies/CHE-100.023.968/events?limit=10")
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"events":[{"id":"evt-1","ce_type":"company.auditor.changed","ce_source":"https://api.vynco.ch","ce_time":"2026-03-01T00:00:00Z","company_uid":"CHE-100.023.968","company_name":"Test AG","category":"auditor_change","severity":"medium","summary":"Auditor changed","detail_json":{},"created_at":"2026-03-01T00:00:00Z"}],"count":1}"#)
+            .with_body(r#"{"events":[{"id":"evt-1","ceType":"company.auditor.changed","ceSource":"https://api.vynco.ch","ceTime":"2026-03-01T00:00:00Z","companyUid":"CHE-100.023.968","companyName":"Test AG","category":"auditor_change","severity":"medium","summary":"Auditor changed","detailJson":{},"createdAt":"2026-03-01T00:00:00Z"}],"count":1}"#)
             .create_async()
             .await;
         let client = Client::builder("vc_test_key")

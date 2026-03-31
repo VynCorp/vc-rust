@@ -14,12 +14,6 @@ impl<'a> Analytics<'a> {
         Self { client }
     }
 
-    pub async fn statistics(&self) -> Result<Response<CompanyStatistics>> {
-        self.client
-            .request(Method::GET, "/v1/companies/statistics")
-            .await
-    }
-
     pub async fn cantons(&self) -> Result<Response<Vec<CantonDistribution>>> {
         self.client
             .request(Method::GET, "/v1/analytics/cantons")
@@ -101,26 +95,6 @@ impl<'a> Analytics<'a> {
 #[cfg(test)]
 mod tests {
     use crate::Client;
-
-    #[tokio::test]
-    async fn test_analytics_statistics() {
-        let mut server = mockito::Server::new_async().await;
-        let mock = server
-            .mock("GET", "/v1/companies/statistics")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(r#"{"total":507234,"byStatus":{"active":400000,"deleted":100000,"in_liquidation":7234},"byCanton":{"ZH":80000,"BE":60000},"byLegalForm":{"AG":200000,"GmbH":150000}}"#)
-            .create_async()
-            .await;
-        let client = Client::builder("vc_test_key")
-            .base_url(server.url())
-            .build()
-            .unwrap();
-        let resp = client.analytics().statistics().await.unwrap();
-        assert_eq!(resp.data.total, 507234);
-        assert!(resp.data.by_status.contains_key("active"));
-        mock.assert_async().await;
-    }
 
     #[tokio::test]
     async fn test_analytics_cantons() {

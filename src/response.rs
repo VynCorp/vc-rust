@@ -1,5 +1,6 @@
 /// Metadata extracted from VynCo API response headers.
 #[derive(Debug, Clone, Default)]
+#[non_exhaustive]
 pub struct ResponseMeta {
     /// Unique request identifier for tracing (`X-Request-Id`).
     pub request_id: Option<String>,
@@ -7,7 +8,7 @@ pub struct ResponseMeta {
     pub credits_used: Option<i64>,
     /// Remaining credit balance after this request (`X-Credits-Remaining`).
     pub credits_remaining: Option<i64>,
-    /// Maximum requests per minute for the current tier (`X-Rate-Limit-Limit`).
+    /// Maximum requests per minute for the current tier (`X-RateLimit-Limit`).
     pub rate_limit_limit: Option<u32>,
     /// Remaining requests in the current rate limit window (`X-RateLimit-Remaining`).
     pub rate_limit_remaining: Option<u32>,

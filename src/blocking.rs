@@ -551,11 +551,6 @@ pub struct Analytics<'a> {
 }
 
 impl Analytics<'_> {
-    pub fn statistics(&self) -> Result<Response<CompanyStatistics>> {
-        self.client
-            .block_on(self.client.inner.analytics().statistics())
-    }
-
     pub fn cantons(&self) -> Result<Response<Vec<CantonDistribution>>> {
         self.client
             .block_on(self.client.inner.analytics().cantons())
