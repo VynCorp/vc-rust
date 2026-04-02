@@ -34,14 +34,23 @@ async fn main() -> Result<(), vynco::VyncoError> {
     let params = CompanyListParams {
         search: Some("Novartis".into()),
         canton: Some("BS".into()),
+        legal_form: Some("AG".into()),
+        sort_by: Some("shareCapital".into()),
+        sort_desc: Some(true),
         ..Default::default()
     };
     let resp = client.companies().list(&params).await?;
     println!("Found {} companies", resp.data.total);
 
-    // Get a single company
+    // Get a single company (full details with address, geo, FINMA status, etc.)
     let company = client.companies().get("CHE-105.805.080").await?;
-    println!("{}: {:?}", company.data.name, company.data.legal_form);
+    println!("{}: {:?} ({})", company.data.name, company.data.legal_form,
+        company.data.address_city.as_deref().unwrap_or("unknown"));
+
+    // Get full company view (persons, changes, relationships in one call)
+    let full = client.companies().get_full("CHE-105.805.080").await?;
+    println!("{} board members, {} recent changes",
+        full.data.persons.len(), full.data.recent_changes.len());
 
     // Sanctions screening
     let screening = client.screening().screen(&vynco::ScreeningRequest {
@@ -81,12 +90,12 @@ fn main() -> Result<(), vynco::VyncoError> {
 
 ## API Coverage
 
-18 resource modules covering 69 endpoints:
+18 resource modules covering 83 endpoints:
 
 | Resource | Methods |
 |----------|---------|
 | `health()` | `check` |
-| `companies()` | `list`, `get`, `count`, `events`, `statistics`, `compare`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby` |
+| `companies()` | `list`, `get`, `get_full`, `count`, `events`, `statistics`, `compare`, `structure`, `acquisitions`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_excel` |
 | `auditors()` | `history`, `tenures` |
 | `dashboard()` | `get` |
 | `screening()` | `screen` |
@@ -97,11 +106,11 @@ fn main() -> Result<(), vynco::VyncoError> {
 | `api_keys()` | `list`, `create`, `revoke` |
 | `credits()` | `balance`, `usage`, `history` |
 | `billing()` | `create_checkout`, `create_portal` |
-| `teams()` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary` |
+| `teams()` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary`, `join` |
 | `changes()` | `list`, `by_company`, `statistics` |
 | `persons()` | `board_members` |
 | `analytics()` | `statistics`, `cantons`, `auditors`, `cluster`, `anomalies`, `rfm_segments`, `cohorts`, `candidates` |
-| `dossiers()` | `create`, `list`, `get`, `delete` |
+| `dossiers()` | `create`, `list`, `get`, `delete`, `generate` |
 | `graph()` | `get`, `export`, `analyze` |
 
 ## Response Metadata
