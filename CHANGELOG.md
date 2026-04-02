@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-02
+
+Aligned SDK with stabilized VynCo API v1.6.0.
+
+### Added
+
+- **14 new endpoint bindings** (69 → 83 total):
+  - `companies` — `get_full`, `structure`, `acquisitions`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_excel`
+  - `dossiers` — `generate`
+  - `teams` — `join`
+- **18 new types**: `CompanyFullResponse`, `PersonEntry`, `ChangeEntry`, `RelationshipEntry`, `CorporateStructure`, `RelatedCompanyEntry`, `Note`, `CreateNoteRequest`, `UpdateNoteRequest`, `Tag`, `CreateTagRequest`, `TagSummary`, `ExcelExportRequest`, `ExcelExportFilter`, `Acquisition`, `LongestTenure`, `JoinTeamRequest`, `JoinTeamResponse`
+- `Client::request_bytes_with_body()` for POST endpoints returning raw bytes (CSV export)
+- 8 new tests (37 → 45 total)
+
+### Changed
+
+- **`Company`**: expanded from 9 to 30 fields — added `currency`, `purpose`, `founding_date`, `registration_date`, `deletion_date`, `legal_seat`, `municipality`, `data_source`, `enrichment_level`, `address_street`, `address_house_number`, `address_zip_code`, `address_city`, `address_canton`, `website`, `sub_industry`, `employee_count`, `auditor_name`, `latitude`, `longitude`, `geo_precision`, `noga_code`, `sanctions_hit`, `last_screened_at`, `is_finma_regulated`, `ehraid`, `chid`, `cantonal_excerpt_url`, `old_names`, `translations`
+- **`CompanyListParams`**: added `status`, `legal_form`, `capital_min`, `capital_max`, `auditor_category`, `sort_by`, `sort_desc`
+- **`DashboardResponse`** sub-types rebuilt to match API:
+  - `AuditorTenureStats` — new fields: `total_tracked`, `current_auditors`, `tenures_over_10_years`, `tenures_over_7_years`, `longest_tenure`
+  - `DataCompleteness` — new fields: `enriched_companies`, `companies_with_industry`, `companies_with_geo`, `total_persons`, `total_changes`, `total_sogc_publications`
+  - `PipelineStatus` — `name`→`id`, `records_processed`→`items_processed`, `last_run`→`last_completed_at`
+- **`AiSearchResponse.results`**: `Vec<Company>` → `Vec<serde_json::Value>`
+- **Type widening**: `CreditBalance.used_this_month`, `BillingSummary.used_this_month`, `MemberUsage.credits_used` — `i32` → `i64`
+
+### Breaking
+
+- `DashboardResponse` sub-types have different field names (see Changed above)
+- `AiSearchResponse.results` is now `Vec<serde_json::Value>` instead of `Vec<Company>`
+
 ## [2.0.0] - 2026-03-30
 
 Major version — SDK rewritten to align with the new Rust-based VynCo API.
@@ -115,6 +145,7 @@ Initial release (draft API).
 - TLS backend selection (rustls default, native-tls optional)
 - 12 integration tests with mockito
 
+[2.1.0]: https://github.com/VynCorp/vc-rust/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/VynCorp/vc-rust/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/VynCorp/vc-rust/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/VynCorp/vc-rust/releases/tag/v0.1.0
