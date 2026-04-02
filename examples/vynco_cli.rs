@@ -338,19 +338,27 @@ async fn run(client: Client, command: Command) -> Result<(), VyncoError> {
         Command::Dashboard => {
             let resp = client.dashboard().get().await?;
             let d = &resp.data.data;
-            println!("Total companies: {}", d.total_companies);
-            println!("With canton:     {}", d.with_canton);
-            println!("With status:     {}", d.with_status);
-            println!("With legal form: {}", d.with_legal_form);
-            println!("With capital:    {}", d.with_capital);
-            println!("Completeness:    {:.1}%", d.completeness_pct);
+            println!("Total companies:     {}", d.total_companies);
+            println!("Enriched:            {}", d.enriched_companies);
+            println!("With industry:       {}", d.companies_with_industry);
+            println!("With geo:            {}", d.companies_with_geo);
+            println!("Total persons:       {}", d.total_persons);
+            println!("Total changes:       {}", d.total_changes);
+            println!("SOGC publications:   {}", d.total_sogc_publications);
 
             let t = &resp.data.auditor_tenures;
             println!("\nAuditor tenures:");
-            println!("  Total:          {}", t.total_tenures);
-            println!("  Long (7+yr):    {}", t.long_tenures_7plus);
+            println!("  Tracked:        {}", t.total_tracked);
+            println!("  Current:        {}", t.current_auditors);
+            println!("  Over 7yr:       {}", t.tenures_over_7_years);
+            println!("  Over 10yr:      {}", t.tenures_over_10_years);
             println!("  Avg years:      {:.1}", t.avg_tenure_years);
-            println!("  Max years:      {:.1}", t.max_tenure_years);
+            if let Some(lt) = &t.longest_tenure {
+                println!(
+                    "  Longest:        {:.1}yr — {} ({})",
+                    lt.tenure_years, lt.auditor_name, lt.company_name
+                );
+            }
             print_meta(&resp.meta);
         }
 

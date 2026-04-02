@@ -191,6 +191,11 @@ impl Companies<'_> {
         self.client.block_on(self.client.inner.companies().get(uid))
     }
 
+    pub fn get_full(&self, uid: &str) -> Result<Response<CompanyFullResponse>> {
+        self.client
+            .block_on(self.client.inner.companies().get_full(uid))
+    }
+
     pub fn count(&self) -> Result<Response<CompanyCount>> {
         self.client.block_on(self.client.inner.companies().count())
     }
@@ -235,9 +240,69 @@ impl Companies<'_> {
             .block_on(self.client.inner.companies().fingerprint(uid))
     }
 
+    pub fn structure(&self, uid: &str) -> Result<Response<CorporateStructure>> {
+        self.client
+            .block_on(self.client.inner.companies().structure(uid))
+    }
+
+    pub fn acquisitions(&self, uid: &str) -> Result<Response<Vec<Acquisition>>> {
+        self.client
+            .block_on(self.client.inner.companies().acquisitions(uid))
+    }
+
     pub fn nearby(&self, params: &NearbyParams) -> Result<Response<Vec<NearbyCompany>>> {
         self.client
             .block_on(self.client.inner.companies().nearby(params))
+    }
+
+    pub fn notes(&self, uid: &str) -> Result<Response<Vec<Note>>> {
+        self.client
+            .block_on(self.client.inner.companies().notes(uid))
+    }
+
+    pub fn create_note(&self, uid: &str, req: &CreateNoteRequest) -> Result<Response<Note>> {
+        self.client
+            .block_on(self.client.inner.companies().create_note(uid, req))
+    }
+
+    pub fn update_note(
+        &self,
+        uid: &str,
+        note_id: &str,
+        req: &UpdateNoteRequest,
+    ) -> Result<Response<Note>> {
+        self.client
+            .block_on(self.client.inner.companies().update_note(uid, note_id, req))
+    }
+
+    pub fn delete_note(&self, uid: &str, note_id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.companies().delete_note(uid, note_id))
+    }
+
+    pub fn tags(&self, uid: &str) -> Result<Response<Vec<Tag>>> {
+        self.client
+            .block_on(self.client.inner.companies().tags(uid))
+    }
+
+    pub fn create_tag(&self, uid: &str, req: &CreateTagRequest) -> Result<Response<Tag>> {
+        self.client
+            .block_on(self.client.inner.companies().create_tag(uid, req))
+    }
+
+    pub fn delete_tag(&self, uid: &str, tag_id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.companies().delete_tag(uid, tag_id))
+    }
+
+    pub fn all_tags(&self) -> Result<Response<Vec<TagSummary>>> {
+        self.client
+            .block_on(self.client.inner.companies().all_tags())
+    }
+
+    pub fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+        self.client
+            .block_on(self.client.inner.companies().export_excel(req))
     }
 }
 
@@ -509,6 +574,10 @@ impl Teams<'_> {
         self.client
             .block_on(self.client.inner.teams().billing_summary())
     }
+
+    pub fn join(&self, req: &JoinTeamRequest) -> Result<Response<JoinTeamResponse>> {
+        self.client.block_on(self.client.inner.teams().join(req))
+    }
 }
 
 pub struct Changes<'a> {
@@ -612,6 +681,11 @@ impl Dossiers<'_> {
     pub fn delete(&self, id: &str) -> Result<ResponseMeta> {
         self.client
             .block_on(self.client.inner.dossiers().delete(id))
+    }
+
+    pub fn generate(&self, uid: &str) -> Result<Response<Dossier>> {
+        self.client
+            .block_on(self.client.inner.dossiers().generate(uid))
     }
 }
 

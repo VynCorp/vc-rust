@@ -57,6 +57,12 @@ impl<'a> Teams<'a> {
             .request(Method::GET, "/v1/teams/me/billing-summary")
             .await
     }
+
+    pub async fn join(&self, req: &JoinTeamRequest) -> Result<Response<JoinTeamResponse>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/teams/join", req)
+            .await
+    }
 }
 
 #[cfg(test)]
@@ -81,6 +87,30 @@ mod tests {
         assert_eq!(resp.data.id, "team-1");
         assert_eq!(resp.data.name, "Acme Corp");
         assert_eq!(resp.data.tier, "pro");
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_teams_join() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/v1/teams/join")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"teamId":"team-1","teamName":"Acme Corp","role":"member"}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let req = crate::JoinTeamRequest {
+            token: "inv-token-123".into(),
+        };
+        let resp = client.teams().join(&req).await.unwrap();
+        assert_eq!(resp.data.team_id, "team-1");
+        assert_eq!(resp.data.team_name, "Acme Corp");
+        assert_eq!(resp.data.role, "member");
         mock.assert_async().await;
     }
 

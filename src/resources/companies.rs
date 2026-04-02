@@ -2,7 +2,8 @@ use reqwest::Method;
 
 use crate::client::Client;
 use crate::error::Result;
-use crate::response::Response;
+use crate::resources::ExportFile;
+use crate::response::{Response, ResponseMeta};
 use crate::types::*;
 
 pub struct Companies<'a> {
@@ -28,6 +29,27 @@ impl<'a> Companies<'a> {
         if let Some(ref cs) = params.changed_since {
             query.push(("changed_since", cs.clone()));
         }
+        if let Some(ref s) = params.status {
+            query.push(("status", s.clone()));
+        }
+        if let Some(ref lf) = params.legal_form {
+            query.push(("legalForm", lf.clone()));
+        }
+        if let Some(cm) = params.capital_min {
+            query.push(("capitalMin", cm.to_string()));
+        }
+        if let Some(cx) = params.capital_max {
+            query.push(("capitalMax", cx.to_string()));
+        }
+        if let Some(ref ac) = params.auditor_category {
+            query.push(("auditorCategory", ac.clone()));
+        }
+        if let Some(ref sb) = params.sort_by {
+            query.push(("sortBy", sb.clone()));
+        }
+        if let Some(sd) = params.sort_desc {
+            query.push(("sortDesc", sd.to_string()));
+        }
         if let Some(p) = params.page {
             query.push(("page", p.to_string()));
         }
@@ -46,6 +68,12 @@ impl<'a> Companies<'a> {
     pub async fn get(&self, uid: &str) -> Result<Response<Company>> {
         self.client
             .request(Method::GET, &format!("/v1/companies/{uid}"))
+            .await
+    }
+
+    pub async fn get_full(&self, uid: &str) -> Result<Response<CompanyFullResponse>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/full"))
             .await
     }
 
@@ -112,6 +140,18 @@ impl<'a> Companies<'a> {
             .await
     }
 
+    pub async fn structure(&self, uid: &str) -> Result<Response<CorporateStructure>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/structure"))
+            .await
+    }
+
+    pub async fn acquisitions(&self, uid: &str) -> Result<Response<Vec<Acquisition>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/acquisitions"))
+            .await
+    }
+
     pub async fn nearby(&self, params: &NearbyParams) -> Result<Response<Vec<NearbyCompany>>> {
         let mut query: Vec<(&str, String)> = Vec::new();
         query.push(("lat", params.lat.to_string()));
@@ -125,6 +165,86 @@ impl<'a> Companies<'a> {
         self.client
             .request_with_params(Method::GET, "/v1/companies/nearby", &query)
             .await
+    }
+
+    // -- Notes --
+
+    pub async fn notes(&self, uid: &str) -> Result<Response<Vec<Note>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/notes"))
+            .await
+    }
+
+    pub async fn create_note(&self, uid: &str, req: &CreateNoteRequest) -> Result<Response<Note>> {
+        self.client
+            .request_with_body(Method::POST, &format!("/v1/companies/{uid}/notes"), req)
+            .await
+    }
+
+    pub async fn update_note(
+        &self,
+        uid: &str,
+        note_id: &str,
+        req: &UpdateNoteRequest,
+    ) -> Result<Response<Note>> {
+        self.client
+            .request_with_body(
+                Method::PUT,
+                &format!("/v1/companies/{uid}/notes/{note_id}"),
+                req,
+            )
+            .await
+    }
+
+    pub async fn delete_note(&self, uid: &str, note_id: &str) -> Result<ResponseMeta> {
+        self.client
+            .request_empty(
+                Method::DELETE,
+                &format!("/v1/companies/{uid}/notes/{note_id}"),
+            )
+            .await
+    }
+
+    // -- Tags --
+
+    pub async fn tags(&self, uid: &str) -> Result<Response<Vec<Tag>>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/tags"))
+            .await
+    }
+
+    pub async fn create_tag(&self, uid: &str, req: &CreateTagRequest) -> Result<Response<Tag>> {
+        self.client
+            .request_with_body(Method::POST, &format!("/v1/companies/{uid}/tags"), req)
+            .await
+    }
+
+    pub async fn delete_tag(&self, uid: &str, tag_id: &str) -> Result<ResponseMeta> {
+        self.client
+            .request_empty(
+                Method::DELETE,
+                &format!("/v1/companies/{uid}/tags/{tag_id}"),
+            )
+            .await
+    }
+
+    pub async fn all_tags(&self) -> Result<Response<Vec<TagSummary>>> {
+        self.client.request(Method::GET, "/v1/tags").await
+    }
+
+    // -- Excel export --
+
+    pub async fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+        let (bytes, meta, content_type, filename) = self
+            .client
+            .request_bytes_with_body(Method::POST, "/v1/companies/export/excel", req)
+            .await?;
+        Ok(ExportFile {
+            meta,
+            bytes,
+            content_type,
+            filename,
+        })
     }
 }
 
@@ -289,6 +409,218 @@ mod tests {
             .unwrap();
         assert_eq!(resp.data.count, 1);
         assert_eq!(resp.data.events[0].category, "auditor_change");
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_get_full() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/full")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"company":{"uid":"CHE-100.023.968","name":"Test AG","canton":"ZH"},"persons":[{"personId":"p-1","firstName":"Hans","lastName":"Mueller","role":"CEO","since":"2020-01-01","until":null}],"recentChanges":[{"id":"c-1","companyUid":"CHE-100.023.968","changeType":"capital_change","fieldName":"share_capital","oldValue":"100000","newValue":"200000","detectedAt":"2026-03-01","sourceDate":null}],"relationships":[{"relatedUid":"CHE-200.000.001","relatedName":"Partner GmbH","relationshipType":"shared_person"}]}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client
+            .companies()
+            .get_full("CHE-100.023.968")
+            .await
+            .unwrap();
+        assert_eq!(resp.data.company.uid, "CHE-100.023.968");
+        assert_eq!(resp.data.persons.len(), 1);
+        assert_eq!(resp.data.persons[0].role, "CEO");
+        assert_eq!(resp.data.recent_changes.len(), 1);
+        assert_eq!(
+            resp.data.relationships[0].relationship_type,
+            "shared_person"
+        );
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_structure() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/structure")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"headOffices":[{"uid":"CHE-300.000.001","name":"Parent AG"}],"branchOffices":[],"acquisitions":[{"uid":"CHE-400.000.001","name":"Acquired GmbH"}],"acquiredBy":[]}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client
+            .companies()
+            .structure("CHE-100.023.968")
+            .await
+            .unwrap();
+        assert_eq!(resp.data.head_offices.len(), 1);
+        assert_eq!(resp.data.head_offices[0].name, "Parent AG");
+        assert_eq!(resp.data.acquisitions.len(), 1);
+        assert!(resp.data.branch_offices.is_empty());
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_acquisitions() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/acquisitions")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"acquirerUid":"CHE-100.023.968","acquiredUid":"CHE-200.000.001","acquirerName":"Test AG","acquiredName":"Target GmbH","createdAt":"2025-06-15T00:00:00Z"}]"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client
+            .companies()
+            .acquisitions("CHE-100.023.968")
+            .await
+            .unwrap();
+        assert_eq!(resp.data.len(), 1);
+        assert_eq!(resp.data[0].acquirer_uid, "CHE-100.023.968");
+        assert_eq!(resp.data[0].acquired_name, Some("Target GmbH".into()));
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_notes_crud() {
+        let mut server = mockito::Server::new_async().await;
+        let list_mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/notes")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"id":"note-1","companyUid":"CHE-100.023.968","content":"Interesting pattern","noteType":"note","rating":null,"isPrivate":false,"createdAt":"2026-03-30T12:00:00Z","updatedAt":"2026-03-30T12:00:00Z"}]"#)
+            .create_async()
+            .await;
+        let create_mock = server
+            .mock("POST", "/v1/companies/CHE-100.023.968/notes")
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"id":"note-2","companyUid":"CHE-100.023.968","content":"New note","noteType":"annotation","rating":4,"isPrivate":true,"createdAt":"2026-03-30T13:00:00Z","updatedAt":"2026-03-30T13:00:00Z"}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+
+        let list_resp = client.companies().notes("CHE-100.023.968").await.unwrap();
+        assert_eq!(list_resp.data.len(), 1);
+        assert_eq!(list_resp.data[0].content, "Interesting pattern");
+        assert!(!list_resp.data[0].is_private);
+
+        let req = crate::CreateNoteRequest {
+            content: "New note".into(),
+            note_type: Some("annotation".into()),
+            rating: Some(4),
+            is_private: Some(true),
+        };
+        let create_resp = client
+            .companies()
+            .create_note("CHE-100.023.968", &req)
+            .await
+            .unwrap();
+        assert_eq!(create_resp.data.id, "note-2");
+        assert_eq!(create_resp.data.rating, Some(4));
+        assert!(create_resp.data.is_private);
+
+        list_mock.assert_async().await;
+        create_mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_tags_crud() {
+        let mut server = mockito::Server::new_async().await;
+        let list_mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/tags")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r##"[{"id":"tag-1","companyUid":"CHE-100.023.968","tagName":"risk-high","color":"#FF0000","createdAt":"2026-03-30T12:00:00Z"}]"##)
+            .create_async()
+            .await;
+        let create_mock = server
+            .mock("POST", "/v1/companies/CHE-100.023.968/tags")
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"id":"tag-2","companyUid":"CHE-100.023.968","tagName":"audit-needed","color":null,"createdAt":"2026-03-30T13:00:00Z"}"#)
+            .create_async()
+            .await;
+        let all_mock = server
+            .mock("GET", "/v1/tags")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"[{"tagName":"risk-high","count":12},{"tagName":"audit-needed","count":5}]"#,
+            )
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+
+        let list_resp = client.companies().tags("CHE-100.023.968").await.unwrap();
+        assert_eq!(list_resp.data.len(), 1);
+        assert_eq!(list_resp.data[0].tag_name, "risk-high");
+        assert_eq!(list_resp.data[0].color, Some("#FF0000".into()));
+
+        let req = crate::CreateTagRequest {
+            tag_name: "audit-needed".into(),
+            color: None,
+        };
+        let create_resp = client
+            .companies()
+            .create_tag("CHE-100.023.968", &req)
+            .await
+            .unwrap();
+        assert_eq!(create_resp.data.tag_name, "audit-needed");
+
+        let all_resp = client.companies().all_tags().await.unwrap();
+        assert_eq!(all_resp.data.len(), 2);
+        assert_eq!(all_resp.data[0].count, 12);
+
+        list_mock.assert_async().await;
+        create_mock.assert_async().await;
+        all_mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_export_excel() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/v1/companies/export/excel")
+            .with_status(200)
+            .with_header("content-type", "text/csv")
+            .with_header(
+                "content-disposition",
+                r#"attachment; filename="export.csv""#,
+            )
+            .with_body("uid,name\nCHE-100.023.968,Test AG\n")
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let req = crate::ExcelExportRequest {
+            uids: Some(vec!["CHE-100.023.968".into()]),
+            ..Default::default()
+        };
+        let file = client.companies().export_excel(&req).await.unwrap();
+        assert_eq!(file.content_type, "text/csv");
+        assert_eq!(file.filename, "export.csv");
+        assert!(String::from_utf8_lossy(&file.bytes).contains("Test AG"));
         mock.assert_async().await;
     }
 }

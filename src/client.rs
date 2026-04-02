@@ -262,6 +262,45 @@ impl Client {
         Ok((bytes, meta, content_type, filename))
     }
 
+    /// Send a request with a JSON body and return raw bytes (e.g. CSV exports).
+    /// Returns `(bytes, meta, content_type, filename)`.
+    pub(crate) async fn request_bytes_with_body<B: Serialize>(
+        &self,
+        method: Method,
+        path: &str,
+        body: &B,
+    ) -> Result<(Vec<u8>, ResponseMeta, String, String)> {
+        let builder = self.http.request(method.clone(), self.url(path)).json(body);
+        let resp = self.execute_raw(builder).await?;
+        let meta = ResponseMeta::from_headers(resp.headers());
+        let status = resp.status();
+
+        let content_type = resp
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("application/octet-stream")
+            .to_string();
+
+        let filename = resp
+            .headers()
+            .get(header::CONTENT_DISPOSITION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| {
+                v.split("filename=")
+                    .nth(1)
+                    .map(|f| f.trim_matches('"').to_string())
+            })
+            .unwrap_or_default();
+
+        if !status.is_success() {
+            return Err(self.map_error(status, resp).await);
+        }
+
+        let bytes = resp.bytes().await.map_err(VyncoError::Http)?.to_vec();
+        Ok((bytes, meta, content_type, filename))
+    }
+
     /// Execute a request with retry logic, returning the deserialized body + metadata.
     async fn execute<T: DeserializeOwned>(
         &self,

@@ -35,6 +35,16 @@ impl<'a> Dossiers<'a> {
             .request_empty(Method::DELETE, &format!("/v1/dossiers/{id}"))
             .await
     }
+
+    pub async fn generate(&self, uid: &str) -> Result<Response<Dossier>> {
+        self.client
+            .request_with_body(
+                Method::POST,
+                &format!("/v1/dossiers/{uid}/generate"),
+                &serde_json::json!({}),
+            )
+            .await
+    }
 }
 
 #[cfg(test)]
@@ -63,6 +73,27 @@ mod tests {
         assert_eq!(resp.data.id, "dos-1");
         assert_eq!(resp.data.company_uid, "CHE-100.023.968");
         assert_eq!(resp.data.level, "standard");
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_dossiers_generate() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/v1/dossiers/CHE-100.023.968/generate")
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"id":"dos-gen-1","userId":"usr-1","companyUid":"CHE-100.023.968","companyName":"Test AG","level":"summary","content":"Auto-generated dossier...","sources":["zefix","sogc"],"createdAt":"2026-03-30T14:00:00Z"}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client.dossiers().generate("CHE-100.023.968").await.unwrap();
+        assert_eq!(resp.data.id, "dos-gen-1");
+        assert_eq!(resp.data.company_uid, "CHE-100.023.968");
+        assert_eq!(resp.data.level, "summary");
         mock.assert_async().await;
     }
 

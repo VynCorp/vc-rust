@@ -57,9 +57,69 @@ pub struct Company {
     #[serde(default)]
     pub share_capital: Option<f64>,
     #[serde(default)]
+    pub currency: Option<String>,
+    #[serde(default)]
+    pub purpose: Option<String>,
+    #[serde(default)]
+    pub founding_date: Option<String>,
+    #[serde(default)]
+    pub registration_date: Option<String>,
+    #[serde(default)]
+    pub deletion_date: Option<String>,
+    #[serde(default)]
+    pub legal_seat: Option<String>,
+    #[serde(default)]
+    pub municipality: Option<String>,
+    #[serde(default)]
+    pub data_source: Option<String>,
+    #[serde(default)]
+    pub enrichment_level: Option<String>,
+    #[serde(default)]
+    pub address_street: Option<String>,
+    #[serde(default)]
+    pub address_house_number: Option<String>,
+    #[serde(default)]
+    pub address_zip_code: Option<String>,
+    #[serde(default)]
+    pub address_city: Option<String>,
+    #[serde(default)]
+    pub address_canton: Option<String>,
+    #[serde(default)]
+    pub website: Option<String>,
+    #[serde(default)]
     pub industry: Option<String>,
     #[serde(default)]
+    pub sub_industry: Option<String>,
+    #[serde(default)]
+    pub employee_count: Option<i32>,
+    #[serde(default)]
+    pub auditor_name: Option<String>,
+    #[serde(default)]
     pub auditor_category: Option<String>,
+    #[serde(default)]
+    pub latitude: Option<f64>,
+    #[serde(default)]
+    pub longitude: Option<f64>,
+    #[serde(default)]
+    pub geo_precision: Option<String>,
+    #[serde(default)]
+    pub noga_code: Option<String>,
+    #[serde(default)]
+    pub sanctions_hit: Option<bool>,
+    #[serde(default)]
+    pub last_screened_at: Option<String>,
+    #[serde(default)]
+    pub is_finma_regulated: Option<bool>,
+    #[serde(default)]
+    pub ehraid: Option<i64>,
+    #[serde(default)]
+    pub chid: Option<String>,
+    #[serde(default)]
+    pub cantonal_excerpt_url: Option<String>,
+    #[serde(default)]
+    pub old_names: Option<Vec<String>>,
+    #[serde(default)]
+    pub translations: Option<Vec<String>>,
     #[serde(default)]
     pub updated_at: Option<String>,
 }
@@ -73,6 +133,20 @@ pub struct CompanyListParams {
     pub canton: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub changed_since: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub legal_form: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capital_min: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capital_max: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auditor_category: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_by: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_desc: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub page: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -205,34 +279,30 @@ pub struct DataCompleteness {
     #[serde(default)]
     pub total_companies: i64,
     #[serde(default)]
-    pub with_canton: i64,
+    pub enriched_companies: i64,
     #[serde(default)]
-    pub with_status: i64,
+    pub companies_with_industry: i64,
     #[serde(default)]
-    pub with_legal_form: i64,
+    pub companies_with_geo: i64,
     #[serde(default)]
-    pub with_capital: i64,
+    pub total_persons: i64,
     #[serde(default)]
-    pub with_industry: i64,
+    pub total_changes: i64,
     #[serde(default)]
-    pub with_auditor: i64,
-    #[serde(default)]
-    pub completeness_pct: f64,
+    pub total_sogc_publications: i64,
 }
 
 /// Pipeline run status.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineStatus {
-    pub name: String,
-    #[serde(default)]
-    pub last_run: Option<String>,
+    pub id: String,
     #[serde(default)]
     pub status: String,
     #[serde(default)]
-    pub records_processed: Option<i64>,
+    pub items_processed: i32,
     #[serde(default)]
-    pub duration_seconds: Option<f64>,
+    pub last_completed_at: Option<String>,
 }
 
 /// Auditor tenure aggregate statistics.
@@ -240,13 +310,31 @@ pub struct PipelineStatus {
 #[serde(rename_all = "camelCase")]
 pub struct AuditorTenureStats {
     #[serde(default)]
-    pub total_tenures: i64,
+    pub total_tracked: i64,
     #[serde(default)]
-    pub long_tenures_7plus: i64,
+    pub current_auditors: i64,
+    #[serde(default)]
+    pub tenures_over_10_years: i64,
+    #[serde(default)]
+    pub tenures_over_7_years: i64,
     #[serde(default)]
     pub avg_tenure_years: f64,
     #[serde(default)]
-    pub max_tenure_years: f64,
+    pub longest_tenure: Option<LongestTenure>,
+}
+
+/// The longest current auditor tenure.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LongestTenure {
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub auditor_name: String,
+    #[serde(default)]
+    pub tenure_years: f64,
 }
 
 // ---------------------------------------------------------------------------
@@ -557,7 +645,7 @@ pub struct AiSearchResponse {
     #[serde(default)]
     pub filters_applied: serde_json::Value,
     #[serde(default)]
-    pub results: Vec<Company>,
+    pub results: Vec<serde_json::Value>,
     #[serde(default)]
     pub total: i64,
 }
@@ -666,7 +754,7 @@ pub struct CreditBalance {
     #[serde(default)]
     pub monthly_credits: i64,
     #[serde(default)]
-    pub used_this_month: i32,
+    pub used_this_month: i64,
     #[serde(default)]
     pub tier: String,
     #[serde(default)]
@@ -800,6 +888,24 @@ pub struct UpdateMemberRoleRequest {
     pub role: String,
 }
 
+/// Request body for joining a team via invitation token.
+#[derive(Debug, Clone, Serialize)]
+pub struct JoinTeamRequest {
+    pub token: String,
+}
+
+/// Response from joining a team.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JoinTeamResponse {
+    #[serde(default)]
+    pub team_id: String,
+    #[serde(default)]
+    pub team_name: String,
+    #[serde(default)]
+    pub role: String,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BillingSummary {
@@ -810,7 +916,7 @@ pub struct BillingSummary {
     #[serde(default)]
     pub monthly_credits: i64,
     #[serde(default)]
-    pub used_this_month: i32,
+    pub used_this_month: i64,
     #[serde(default)]
     pub members: Vec<MemberUsage>,
 }
@@ -822,7 +928,7 @@ pub struct MemberUsage {
     #[serde(default)]
     pub name: String,
     #[serde(default)]
-    pub credits_used: i32,
+    pub credits_used: i64,
 }
 
 // ---------------------------------------------------------------------------
@@ -1301,6 +1407,230 @@ pub struct NearbyCompany {
     pub latitude: f64,
     #[serde(default)]
     pub longitude: f64,
+}
+
+// ---------------------------------------------------------------------------
+// Company full (composite endpoint)
+// ---------------------------------------------------------------------------
+
+/// Full company details with persons, changes, and relationships.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompanyFullResponse {
+    #[serde(default)]
+    pub company: Company,
+    #[serde(default)]
+    pub persons: Vec<PersonEntry>,
+    #[serde(default)]
+    pub recent_changes: Vec<ChangeEntry>,
+    #[serde(default)]
+    pub relationships: Vec<RelationshipEntry>,
+}
+
+/// A person entry in a company's full response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonEntry {
+    pub person_id: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    #[serde(default)]
+    pub role: String,
+    pub since: Option<String>,
+    pub until: Option<String>,
+}
+
+/// A recent change entry in a company's full response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeEntry {
+    pub id: String,
+    #[serde(default)]
+    pub company_uid: String,
+    pub change_type: Option<String>,
+    pub field_name: Option<String>,
+    pub old_value: Option<String>,
+    pub new_value: Option<String>,
+    #[serde(default)]
+    pub detected_at: String,
+    pub source_date: Option<String>,
+}
+
+/// A relationship entry in a company's full response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationshipEntry {
+    #[serde(default)]
+    pub related_uid: String,
+    pub related_name: Option<String>,
+    #[serde(default)]
+    pub relationship_type: String,
+}
+
+// ---------------------------------------------------------------------------
+// Corporate structure
+// ---------------------------------------------------------------------------
+
+/// Corporate structure showing head offices, branches, and M&A relationships.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CorporateStructure {
+    #[serde(default)]
+    pub head_offices: Vec<RelatedCompanyEntry>,
+    #[serde(default)]
+    pub branch_offices: Vec<RelatedCompanyEntry>,
+    #[serde(default)]
+    pub acquisitions: Vec<RelatedCompanyEntry>,
+    #[serde(default)]
+    pub acquired_by: Vec<RelatedCompanyEntry>,
+}
+
+/// A related company entry in a corporate structure.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedCompanyEntry {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub name: String,
+}
+
+// ---------------------------------------------------------------------------
+// Notes
+// ---------------------------------------------------------------------------
+
+/// A user note on a company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Note {
+    pub id: String,
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub content: String,
+    #[serde(default)]
+    pub note_type: String,
+    #[serde(default)]
+    pub rating: Option<i32>,
+    #[serde(default)]
+    pub is_private: bool,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+}
+
+/// Request body for creating a note on a company.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateNoteRequest {
+    pub content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub note_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rating: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_private: Option<bool>,
+}
+
+/// Request body for updating a note.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateNoteRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub note_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rating: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_private: Option<bool>,
+}
+
+// ---------------------------------------------------------------------------
+// Tags
+// ---------------------------------------------------------------------------
+
+/// A user tag on a company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Tag {
+    pub id: String,
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub tag_name: String,
+    #[serde(default)]
+    pub color: Option<String>,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+/// Request body for creating a tag on a company.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateTagRequest {
+    pub tag_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
+}
+
+/// Summary of a user's tag usage across companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagSummary {
+    #[serde(default)]
+    pub tag_name: String,
+    #[serde(default)]
+    pub count: i64,
+}
+
+// ---------------------------------------------------------------------------
+// Excel export
+// ---------------------------------------------------------------------------
+
+/// Request body for Excel/CSV export of companies.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExcelExportRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub filter: Option<ExcelExportFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fields: Option<Vec<String>>,
+}
+
+/// Filter criteria for Excel export.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExcelExportFilter {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub canton: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auditor_category: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Acquisitions (M&A)
+// ---------------------------------------------------------------------------
+
+/// An M&A relationship record.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Acquisition {
+    #[serde(default)]
+    pub acquirer_uid: String,
+    #[serde(default)]
+    pub acquired_uid: String,
+    pub acquirer_name: Option<String>,
+    pub acquired_name: Option<String>,
+    #[serde(default)]
+    pub created_at: String,
 }
 
 // ---------------------------------------------------------------------------
