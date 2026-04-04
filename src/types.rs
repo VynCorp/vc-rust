@@ -1017,6 +1017,65 @@ pub struct BoardMember {
     pub since: Option<String>,
 }
 
+/// Query parameters for searching persons.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct PersonSearchParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub q: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page_size: Option<i64>,
+}
+
+/// A person search result.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonSearchResult {
+    pub id: String,
+    #[serde(default)]
+    pub full_name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub place_of_origin: Option<String>,
+    pub nationality: Option<String>,
+    pub role_count: Option<i64>,
+}
+
+/// Detailed person record with roles across companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonDetail {
+    pub id: String,
+    #[serde(default)]
+    pub full_name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub place_of_origin: Option<String>,
+    pub residence: Option<String>,
+    pub nationality: Option<String>,
+    #[serde(default)]
+    pub roles: Vec<PersonRoleDetail>,
+}
+
+/// A person's role at a specific company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonRoleDetail {
+    #[serde(default)]
+    pub company_uid: String,
+    pub company_name: Option<String>,
+    #[serde(default)]
+    pub role_function: String,
+    #[serde(default)]
+    pub role_category: String,
+    pub signing_authority: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub change_action: Option<String>,
+    pub is_current: Option<bool>,
+}
+
 // ---------------------------------------------------------------------------
 // Analytics
 // ---------------------------------------------------------------------------
@@ -1465,6 +1524,33 @@ pub struct RelationshipEntry {
     pub related_name: Option<String>,
     #[serde(default)]
     pub relationship_type: String,
+}
+
+// ---------------------------------------------------------------------------
+// Classification
+// ---------------------------------------------------------------------------
+
+/// Industry classification for a company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Classification {
+    #[serde(default)]
+    pub company_uid: String,
+    pub sector_code: Option<String>,
+    pub sector_name: Option<String>,
+    pub group_code: Option<String>,
+    pub group_name: Option<String>,
+    pub industry_code: Option<String>,
+    pub industry_name: Option<String>,
+    pub sub_industry_code: Option<String>,
+    pub sub_industry_name: Option<String>,
+    #[serde(default)]
+    pub method: String,
+    #[serde(default)]
+    pub classified_at: String,
+    pub auditor_category: Option<String>,
+    #[serde(default)]
+    pub is_finma_regulated: bool,
 }
 
 // ---------------------------------------------------------------------------

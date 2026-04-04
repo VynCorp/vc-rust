@@ -240,6 +240,11 @@ impl Companies<'_> {
             .block_on(self.client.inner.companies().fingerprint(uid))
     }
 
+    pub fn classification(&self, uid: &str) -> Result<Response<Classification>> {
+        self.client
+            .block_on(self.client.inner.companies().classification(uid))
+    }
+
     pub fn structure(&self, uid: &str) -> Result<Response<CorporateStructure>> {
         self.client
             .block_on(self.client.inner.companies().structure(uid))
@@ -612,6 +617,18 @@ impl Persons<'_> {
     pub fn board_members(&self, uid: &str) -> Result<Response<Vec<BoardMember>>> {
         self.client
             .block_on(self.client.inner.persons().board_members(uid))
+    }
+
+    pub fn search(
+        &self,
+        params: &PersonSearchParams,
+    ) -> Result<Response<PagedResponse<PersonSearchResult>>> {
+        self.client
+            .block_on(self.client.inner.persons().search(params))
+    }
+
+    pub fn get(&self, id: &str) -> Result<Response<PersonDetail>> {
+        self.client.block_on(self.client.inner.persons().get(id))
     }
 }
 

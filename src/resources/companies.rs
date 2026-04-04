@@ -134,6 +134,12 @@ impl<'a> Companies<'a> {
             .await
     }
 
+    pub async fn classification(&self, uid: &str) -> Result<Response<Classification>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/classification"))
+            .await
+    }
+
     pub async fn fingerprint(&self, uid: &str) -> Result<Response<Fingerprint>> {
         self.client
             .request(Method::GET, &format!("/v1/companies/{uid}/fingerprint"))
@@ -465,6 +471,32 @@ mod tests {
         assert_eq!(resp.data.head_offices[0].name, "Parent AG");
         assert_eq!(resp.data.acquisitions.len(), 1);
         assert!(resp.data.branch_offices.is_empty());
+        mock.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_companies_classification() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/v1/companies/CHE-100.023.968/classification")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"companyUid":"CHE-100.023.968","sectorCode":"FIN","sectorName":"Financial Services","groupCode":null,"groupName":null,"industryCode":"64","industryName":"Financial Services","subIndustryCode":null,"subIndustryName":null,"method":"KeywordMatch","classifiedAt":"2026-04-01T00:00:00Z","auditorCategory":"big4","isFinmaRegulated":true}"#)
+            .create_async()
+            .await;
+        let client = Client::builder("vc_test_key")
+            .base_url(server.url())
+            .build()
+            .unwrap();
+        let resp = client
+            .companies()
+            .classification("CHE-100.023.968")
+            .await
+            .unwrap();
+        assert_eq!(resp.data.company_uid, "CHE-100.023.968");
+        assert_eq!(resp.data.sector_code, Some("FIN".into()));
+        assert!(resp.data.is_finma_regulated);
+        assert_eq!(resp.data.method, "KeywordMatch");
         mock.assert_async().await;
     }
 

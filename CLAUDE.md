@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Rust SDK (`vynco` crate) for the VynCo Swiss Corporate Intelligence API. Covers 83 public API endpoints across 18 resource modules. Aligned with the VynCo API v1.6.0.
+Rust SDK (`vynco` crate) for the VynCo Swiss Corporate Intelligence API. Covers 86 public API endpoints across 18 resource modules. Aligned with the VynCo API v1.6.0.
 
 ## Commands
 
@@ -39,12 +39,12 @@ cargo test -- --nocapture      # Run tests with stdout visible
 
 **Error mapping:** HTTP status → `VyncoError` variant: 401→Authentication, 402→InsufficientCredits, 403→Forbidden, 404→NotFound, 400/422→Validation, 409→Conflict, 429→RateLimit, 5xx→Server. Error bodies follow RFC 7807 ProblemDetails with `error_type`, `title`, `status`, `detail` (`Option<String>`), and `instance` (`Option<String>`) fields.
 
-### Resources (18 modules, 83 endpoints)
+### Resources (18 modules, 86 endpoints)
 
 | Resource | Endpoints |
 |----------|-----------|
 | `health` | `check` |
-| `companies` | `list`, `get`, `get_full`, `count`, `events`, `statistics`, `compare`, `structure`, `acquisitions`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_excel` |
+| `companies` | `list`, `get`, `get_full`, `count`, `events`, `statistics`, `compare`, `structure`, `acquisitions`, `classification`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_excel` |
 | `auditors` | `history`, `tenures` |
 | `dashboard` | `get` |
 | `screening` | `screen` |
@@ -57,7 +57,7 @@ cargo test -- --nocapture      # Run tests with stdout visible
 | `billing` | `create_checkout`, `create_portal` |
 | `teams` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary`, `join` |
 | `changes` | `list`, `by_company`, `statistics` |
-| `persons` | `board_members` |
+| `persons` | `board_members`, `search`, `get` |
 | `analytics` | `statistics`, `cantons`, `auditors`, `cluster`, `anomalies`, `rfm_segments`, `cohorts`, `candidates` |
 | `dossiers` | `create`, `list`, `get`, `delete`, `generate` |
 | `graph` | `get`, `export`, `analyze` |
