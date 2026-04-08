@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-04-08
+
+Production-ready release with full API coverage and live-verified e2e tests.
+
+### Added
+
+- **3 new endpoint bindings** (83 → 86 total):
+  - `companies` — `classification`
+  - `persons` — `search`, `get`
+- **5 new types**: `Classification`, `PersonSearchParams`, `PersonSearchResult`, `PersonDetail`, `PersonRoleDetail`
+- **59 e2e integration tests** against the live API, covering all 86 endpoints across 4 tiers (free, session, starter, professional)
+- 3 new unit tests (45 → 48 total)
+
+### Changed
+
+- **Base URL**: `api.vynco.ch` → `vynco.ch/api` (matches production deployment)
+- **Retry logic**: now falls back to `X-RateLimit-Reset` header when `Retry-After` is absent, capped at 60s — prevents 429 exhaustion under tight rate limits
+
+### Fixed
+
+- Rate-limited requests no longer fail after max retries when the API omits the `Retry-After` header but provides `X-RateLimit-Reset`
+
 ## [2.1.0] - 2026-04-02
 
 Aligned SDK with stabilized VynCo API v1.6.0.
@@ -145,6 +167,7 @@ Initial release (draft API).
 - TLS backend selection (rustls default, native-tls optional)
 - 12 integration tests with mockito
 
+[2.2.0]: https://github.com/VynCorp/vc-rust/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/VynCorp/vc-rust/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/VynCorp/vc-rust/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/VynCorp/vc-rust/compare/v0.1.0...v1.0.0
