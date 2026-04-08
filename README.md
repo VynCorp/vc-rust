@@ -163,7 +163,7 @@ See [`examples/vynco_cli.rs`](examples/vynco_cli.rs) for the full source.
 use std::time::Duration;
 
 let client = Client::builder("vc_live_your_api_key")
-    .base_url("https://api.vynco.ch")              // default
+    .base_url("https://vynco.ch/api")               // default
     .timeout(Duration::from_secs(60))               // default: 30s
     .max_retries(3)                                 // default: 2
     .build()?;

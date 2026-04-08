@@ -7,7 +7,7 @@ use crate::error::{ErrorBody, Result, VyncoError};
 use crate::resources::*;
 use crate::response::{Response, ResponseMeta};
 
-const DEFAULT_BASE_URL: &str = "https://api.vynco.ch";
+const DEFAULT_BASE_URL: &str = "https://vynco.ch/api";
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 const DEFAULT_MAX_RETRIES: u32 = 2;
 
@@ -29,7 +29,7 @@ impl ClientBuilder {
         }
     }
 
-    /// Set the API base URL (default: `https://api.vynco.ch`).
+    /// Set the API base URL (default: `https://vynco.ch/api`).
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
         self.base_url = url.into();
         self
@@ -346,11 +346,12 @@ impl Client {
                         let retry_after = resp
                             .headers()
                             .get("Retry-After")
+                            .or_else(|| resp.headers().get("X-RateLimit-Reset"))
                             .and_then(|v| v.to_str().ok())
                             .and_then(|v| v.parse::<u64>().ok());
 
                         let delay = retry_after
-                            .map(Duration::from_secs)
+                            .map(|secs| Duration::from_secs(secs.min(60)))
                             .unwrap_or_else(|| Duration::from_millis(500 * 2u64.pow(attempt)));
 
                         tokio::time::sleep(delay).await;

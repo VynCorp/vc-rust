@@ -88,7 +88,7 @@ Set `max_retries(0)` when testing error status codes to avoid retry delays.
 
 ## API Details
 
-- **Base URL:** `https://api.vynco.ch` (health at `/health`, all other endpoints at `/v1/...`)
+- **Base URL:** `https://vynco.ch/api` (health at `/health`, all other endpoints at `/v1/...`)
 - **Auth:** Bearer tokens — API keys (`vc_live_*` production, `vc_test_*` sandbox) or Entra ID JWTs
 - **OpenAPI spec:** Located at `/home/michael/DEV/Repos/ZefixMiner/EY.EW.ASU.ZefixMiner/src/ZefixMiner.Functions.Api/openapi.json`
 - **Design spec:** `docs/superpowers/specs/2026-03-17-vynco-rust-sdk-design.md`
