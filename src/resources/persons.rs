@@ -14,10 +14,42 @@ impl<'a> Persons<'a> {
         Self { client }
     }
 
+    /// Get board members of a company (unpaginated — returns up to the
+    /// server-side default limit).
     pub async fn board_members(&self, uid: &str) -> Result<Response<Vec<BoardMember>>> {
         self.client
             .request(Method::GET, &format!("/v1/persons/board-members/{uid}"))
             .await
+    }
+
+    /// Get board members of a company with pagination.
+    ///
+    /// `params.page` is 1-indexed. `params.page_size` caps at 500 (server
+    /// default is 100). Essential for companies with large boards like UBS
+    /// which has 1,100+ registered signatories.
+    pub async fn board_members_paged(
+        &self,
+        uid: &str,
+        params: &BoardMemberParams,
+    ) -> Result<Response<Vec<BoardMember>>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(p) = params.page {
+            query.push(("page", p.to_string()));
+        }
+        if let Some(ps) = params.page_size {
+            query.push(("pageSize", ps.to_string()));
+        }
+        if query.is_empty() {
+            self.board_members(uid).await
+        } else {
+            self.client
+                .request_with_params(
+                    Method::GET,
+                    &format!("/v1/persons/board-members/{uid}"),
+                    &query,
+                )
+                .await
+        }
     }
 
     pub async fn search(
@@ -46,6 +78,17 @@ impl<'a> Persons<'a> {
     pub async fn get(&self, id: &str) -> Result<Response<PersonDetail>> {
         self.client
             .request(Method::GET, &format!("/v1/persons/{id}"))
+            .await
+    }
+
+    /// Get a person-centric network view.
+    ///
+    /// Returns the person's companies, co-directors (persons they share
+    /// directorships with), and summary statistics. Useful for compliance
+    /// investigations that start from a person rather than a company.
+    pub async fn network(&self, id: &str) -> Result<Response<PersonNetworkResponse>> {
+        self.client
+            .request(Method::GET, &format!("/v1/persons/{id}/network"))
             .await
     }
 }

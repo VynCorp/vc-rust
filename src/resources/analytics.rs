@@ -90,6 +90,63 @@ impl<'a> Analytics<'a> {
                 .await
         }
     }
+
+    /// Market flow analytics — registrations and dissolutions over time.
+    ///
+    /// `params.period`: `monthly` (default), `quarterly`, `yearly`.
+    /// `params.group_by`: `canton` (default), `industry`, `legalForm`.
+    pub async fn flows(&self, params: &FlowsParams) -> Result<Response<FlowsResponse>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(ref p) = params.period {
+            query.push(("period", p.clone()));
+        }
+        if let Some(ref s) = params.since {
+            query.push(("since", s.clone()));
+        }
+        if let Some(ref g) = params.group_by {
+            query.push(("groupBy", g.clone()));
+        }
+        if query.is_empty() {
+            self.client
+                .request(Method::GET, "/v1/analytics/flows")
+                .await
+        } else {
+            self.client
+                .request_with_params(Method::GET, "/v1/analytics/flows", &query)
+                .await
+        }
+    }
+
+    /// Canton migration analytics — companies moving their legal seat.
+    pub async fn migrations(&self, since: Option<&str>) -> Result<Response<MigrationResponse>> {
+        if let Some(s) = since {
+            self.client
+                .request_with_params(
+                    Method::GET,
+                    "/v1/analytics/migrations",
+                    &[("since", s.to_string())],
+                )
+                .await
+        } else {
+            self.client
+                .request(Method::GET, "/v1/analytics/migrations")
+                .await
+        }
+    }
+
+    /// Benchmark a company against its industry peers.
+    ///
+    /// Returns percentile ranks for dimensions such as capital, board_size,
+    /// change_frequency, and company_age.
+    pub async fn benchmark(&self, params: &BenchmarkParams) -> Result<Response<BenchmarkResponse>> {
+        let mut query: Vec<(&str, String)> = vec![("uid", params.uid.clone())];
+        if let Some(ref d) = params.dimensions {
+            query.push(("dimensions", d.clone()));
+        }
+        self.client
+            .request_with_params(Method::GET, "/v1/analytics/benchmark", &query)
+            .await
+    }
 }
 
 #[cfg(test)]

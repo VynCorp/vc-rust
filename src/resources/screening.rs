@@ -3,7 +3,9 @@ use reqwest::Method;
 use crate::client::Client;
 use crate::error::Result;
 use crate::response::Response;
-use crate::types::{ScreeningRequest, ScreeningResponse};
+use crate::types::{
+    BatchScreeningRequest, BatchScreeningResponse, ScreeningRequest, ScreeningResponse,
+};
 
 pub struct Screening<'a> {
     client: &'a Client,
@@ -17,6 +19,16 @@ impl<'a> Screening<'a> {
     pub async fn screen(&self, req: &ScreeningRequest) -> Result<Response<ScreeningResponse>> {
         self.client
             .request_with_body(Method::POST, "/v1/screening", req)
+            .await
+    }
+
+    /// Screen up to 100 companies against sanctions lists in a single call.
+    pub async fn batch(
+        &self,
+        req: &BatchScreeningRequest,
+    ) -> Result<Response<BatchScreeningResponse>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/screening/batch", req)
             .await
     }
 }

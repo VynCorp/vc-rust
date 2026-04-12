@@ -929,13 +929,13 @@ async fn professional_exports_lifecycle() {
 
 #[tokio::test]
 #[ignore]
-async fn professional_companies_export_excel() {
+async fn professional_companies_export_csv() {
     let c = client!();
     let req = ExcelExportRequest {
         uids: Some(vec![TEST_UID.into()]),
         ..Default::default()
     };
-    let file = c.companies().export_excel(&req).await.unwrap();
+    let file = c.companies().export_csv(&req).await.unwrap();
     assert!(!file.bytes.is_empty());
 }
 

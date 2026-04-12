@@ -5,20 +5,20 @@
 [![CI](https://github.com/VynCorp/vc-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/VynCorp/vc-rust/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/crates/l/vynco.svg)](LICENSE)
 
-Rust SDK for the [VynCo](https://vynco.ch) Swiss Corporate Intelligence API. Access 500,000+ Swiss companies from the commercial register with change tracking, sanctions screening, AI-powered risk analysis, network graphs, watchlists, webhooks, and bulk data exports.
+Rust SDK for the [VynCo](https://vynco.ch) Swiss Corporate Intelligence API. Access 780,000+ Swiss companies from the commercial register with historical timelines, change tracking, sanctions screening, AI-powered risk analysis, UBO resolution, network graphs, watchlists, webhooks, market-flow analytics, and bulk data exports.
 
 ## Installation
 
 ```toml
 [dependencies]
-vynco = "2.0"
+vynco = "2.3"
 ```
 
 For the synchronous (blocking) client:
 
 ```toml
 [dependencies]
-vynco = { version = "2.0", features = ["blocking"] }
+vynco = { version = "2.3", features = ["blocking"] }
 ```
 
 ## Quick Start
@@ -90,28 +90,46 @@ fn main() -> Result<(), vynco::VyncoError> {
 
 ## API Coverage
 
-18 resource modules covering 83 endpoints:
+20 resource modules covering 100+ endpoints:
 
 | Resource | Methods |
 |----------|---------|
 | `health()` | `check` |
-| `companies()` | `list`, `get`, `get_full`, `count`, `events`, `statistics`, `compare`, `structure`, `acquisitions`, `news`, `reports`, `relationships`, `hierarchy`, `fingerprint`, `nearby`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_excel` |
+| `companies()` | `list`, `get`, `get_full`, `count`, `events`, `statistics`, `compare`, `structure`, `acquisitions`, `news`, `reports`, `relationships`, `hierarchy`, `classification`, `fingerprint`, `nearby`, `timeline`, `timeline_summary`, `similar`, `ubo`, `media`, `media_analyze`, `notes`, `create_note`, `update_note`, `delete_note`, `tags`, `create_tag`, `delete_tag`, `all_tags`, `export_csv` |
 | `auditors()` | `history`, `tenures` |
 | `dashboard()` | `get` |
-| `screening()` | `screen` |
+| `screening()` | `screen`, `batch` |
 | `watchlists()` | `list`, `create`, `delete`, `companies`, `add_companies`, `remove_company`, `events` |
 | `webhooks()` | `list`, `create`, `update`, `delete`, `test`, `deliveries` |
 | `exports()` | `create`, `get`, `download` |
-| `ai()` | `dossier`, `search`, `risk_score` |
+| `ai()` | `dossier`, `search`, `risk_score`, `risk_score_batch` |
 | `api_keys()` | `list`, `create`, `revoke` |
 | `credits()` | `balance`, `usage`, `history` |
 | `billing()` | `create_checkout`, `create_portal` |
 | `teams()` | `me`, `create`, `members`, `invite_member`, `update_member_role`, `remove_member`, `billing_summary`, `join` |
 | `changes()` | `list`, `by_company`, `statistics` |
-| `persons()` | `board_members` |
-| `analytics()` | `statistics`, `cantons`, `auditors`, `cluster`, `anomalies`, `rfm_segments`, `cohorts`, `candidates` |
+| `persons()` | `board_members`, `board_members_paged`, `search`, `get`, `network` |
+| `analytics()` | `cantons`, `auditors`, `cluster`, `anomalies`, `rfm_segments`, `cohorts`, `candidates`, `flows`, `migrations`, `benchmark` |
 | `dossiers()` | `create`, `list`, `get`, `delete`, `generate` |
 | `graph()` | `get`, `export`, `analyze` |
+| `alerts()` | `list`, `create`, `delete` |
+| `ownership()` | `trace` |
+
+### New in v2.3
+
+- **Historical timeline** — `companies().timeline(uid, &params)` and AI narrative via `timeline_summary(...)`
+- **Similar companies** — `companies().similar(uid, limit)` scored on industry, canton, capital, legal form, auditor tier
+- **UBO resolution** — `companies().ubo(uid)` walks the ownership chain and identifies natural persons
+- **Ownership trace** — `ownership().trace(uid, &req)` exposes the full chain with circular-ownership detection
+- **Media with sentiment** — `companies().media(uid, &params)` filtered by positive/neutral/negative
+- **Batch operations** — `screening().batch(&req)` (up to 100 UIDs) and `ai().risk_score_batch(&req)` (up to 50 UIDs)
+- **Market analytics** — `analytics().flows(&params)`, `analytics().migrations(since)`, `analytics().benchmark(&params)`
+- **Person network** — `persons().network(id)` for person-centric investigations with co-directors
+- **Saved alerts** — persistent saved queries with optional webhook delivery
+- **Pagination on board_members** — new `board_members_paged(uid, &params)` (max 500)
+- **Typed hierarchy** — `HierarchyResponse` now uses `HierarchyEntity` (was `serde_json::Value`)
+- **Enriched watchlists** — `WatchlistCompaniesResponse.companies` includes name/status/canton
+- **`export_csv`** — new canonical name (`export_excel` kept as deprecated alias)
 
 ## Response Metadata
 

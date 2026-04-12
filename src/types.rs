@@ -122,6 +122,21 @@ pub struct Company {
     pub translations: Option<Vec<String>>,
     #[serde(default)]
     pub updated_at: Option<String>,
+    // Enrichment provenance (v3.1+)
+    #[serde(default)]
+    pub direct_parent_lei: Option<String>,
+    #[serde(default)]
+    pub ultimate_parent_lei: Option<String>,
+    #[serde(default)]
+    pub ultimate_parent_name: Option<String>,
+    #[serde(default)]
+    pub gleif_parent_enriched_at: Option<String>,
+    #[serde(default)]
+    pub industry_source: Option<String>,
+    #[serde(default)]
+    pub industry_confidence: Option<f32>,
+    #[serde(default)]
+    pub industry_classified_at: Option<String>,
 }
 
 /// Query parameters for listing companies.
@@ -435,6 +450,9 @@ pub struct CreateWatchlistRequest {
 pub struct WatchlistCompaniesResponse {
     #[serde(default)]
     pub uids: Vec<String>,
+    /// Enriched company entries with name/status/canton (v3.1+).
+    #[serde(default)]
+    pub companies: Vec<WatchlistCompanyEntry>,
 }
 
 /// Request body for adding companies to a watchlist.
@@ -1015,6 +1033,10 @@ pub struct BoardMember {
     pub residence: Option<String>,
     pub signing_authority: Option<String>,
     pub since: Option<String>,
+    // Enrichment provenance (v3.1+)
+    pub role_source: Option<String>,
+    pub role_confidence: Option<f32>,
+    pub role_inferred_at: Option<String>,
 }
 
 /// Query parameters for searching persons.
@@ -1074,6 +1096,10 @@ pub struct PersonRoleDetail {
     pub end_date: Option<String>,
     pub change_action: Option<String>,
     pub is_current: Option<bool>,
+    // Enrichment provenance (v3.1+)
+    pub role_source: Option<String>,
+    pub role_confidence: Option<f32>,
+    pub role_inferred_at: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -1401,11 +1427,11 @@ pub struct Relationship {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HierarchyResponse {
-    pub parent: Option<serde_json::Value>,
+    pub parent: Option<HierarchyEntity>,
     #[serde(default)]
-    pub subsidiaries: Vec<serde_json::Value>,
+    pub subsidiaries: Vec<HierarchyEntity>,
     #[serde(default)]
-    pub siblings: Vec<serde_json::Value>,
+    pub siblings: Vec<HierarchyEntity>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -1443,6 +1469,8 @@ pub struct Fingerprint {
     pub generated_at: String,
     #[serde(default)]
     pub fingerprint_version: String,
+    // Swiss register entry date (v3.1+)
+    pub registration_date: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -1497,6 +1525,10 @@ pub struct PersonEntry {
     pub role: String,
     pub since: Option<String>,
     pub until: Option<String>,
+    // Enrichment provenance (v3.1+)
+    pub role_source: Option<String>,
+    pub role_confidence: Option<f32>,
+    pub role_inferred_at: Option<String>,
 }
 
 /// A recent change entry in a company's full response.
@@ -1551,6 +1583,11 @@ pub struct Classification {
     pub auditor_category: Option<String>,
     #[serde(default)]
     pub is_finma_regulated: bool,
+    // Enrichment provenance (v3.1+)
+    #[serde(default)]
+    pub industry_source: Option<String>,
+    #[serde(default)]
+    pub industry_confidence: Option<f32>,
 }
 
 // ---------------------------------------------------------------------------
@@ -1750,3 +1787,655 @@ pub struct ComparisonDimension {
     #[serde(default)]
     pub values: Vec<Option<String>>,
 }
+
+// ---------------------------------------------------------------------------
+// Hierarchy (typed entity — replaces the untyped Any on HierarchyResponse)
+// ---------------------------------------------------------------------------
+
+/// A company entity in a hierarchy response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HierarchyEntity {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub name: String,
+    pub confidence: Option<String>,
+    pub shared_person_count: Option<i64>,
+    pub shared_persons: Option<Vec<String>>,
+}
+
+// ---------------------------------------------------------------------------
+// Timeline (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// A single event on a company timeline.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineEvent {
+    pub id: String,
+    #[serde(default)]
+    pub category: String,
+    pub field_name: Option<String>,
+    pub old_value: Option<String>,
+    pub new_value: Option<String>,
+    pub summary: Option<String>,
+    pub source: Option<String>,
+    pub severity: Option<String>,
+    #[serde(default)]
+    pub date: String,
+}
+
+/// Chronological timeline of a company's changes and events.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub events: Vec<TimelineEvent>,
+    #[serde(default)]
+    pub total_events: i64,
+}
+
+/// Query parameters for timeline endpoints.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct TimelineParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub since: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub until: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "changeType")]
+    pub change_type: Option<String>,
+}
+
+/// AI-generated narrative summary of a company timeline.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineSummaryResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub summary: String,
+    #[serde(default)]
+    pub event_count: i64,
+    #[serde(default)]
+    pub generated_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Similar companies (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// A company similar to a given query company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SimilarCompanyResult {
+    pub uid: String,
+    pub name: String,
+    pub canton: Option<String>,
+    pub industry: Option<String>,
+    pub legal_form: Option<String>,
+    pub share_capital: Option<f64>,
+    pub status: Option<String>,
+    #[serde(default)]
+    pub similarity_score: i32,
+    #[serde(default)]
+    pub matching_dimensions: Vec<String>,
+}
+
+/// Response containing companies similar to a query company.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SimilarCompaniesResponse {
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub results: Vec<SimilarCompanyResult>,
+}
+
+// ---------------------------------------------------------------------------
+// UBO / Ownership (v3.1+)
+//
+// Non-Swiss parent entities resolved via GLEIF appear with synthetic
+// identifiers of the form `LEI:<20-char-lei>` in the `*_uid` fields of
+// `UboPerson`, `ChainLink`, and `OwnershipLink`. These are NOT resolvable
+// via `companies().get()`.
+// ---------------------------------------------------------------------------
+
+/// A natural person identified as an ultimate beneficial owner.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UboPerson {
+    #[serde(default)]
+    pub person_id: i64,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub controlling_entity_uid: String,
+    #[serde(default)]
+    pub controlling_entity_name: String,
+    #[serde(default)]
+    pub role: String,
+    pub signing_authority: Option<String>,
+    #[serde(default)]
+    pub path_length: i32,
+}
+
+/// A single link in an ownership chain.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChainLink {
+    #[serde(default)]
+    pub from_uid: String,
+    #[serde(default)]
+    pub from_name: String,
+    #[serde(default)]
+    pub to_uid: String,
+    #[serde(default)]
+    pub to_name: String,
+    #[serde(default)]
+    pub depth: i32,
+}
+
+/// Ultimate beneficial owner resolution response.
+///
+/// When the backend cannot fully resolve the chain, `data_coverage_note`
+/// contains a human-readable explanation (e.g. missing GLEIF enrichment).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UboResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub ubo_persons: Vec<UboPerson>,
+    #[serde(default)]
+    pub ownership_chain: Vec<ChainLink>,
+    #[serde(default)]
+    pub chain_depth: i32,
+    #[serde(default)]
+    pub risk_flags: Vec<String>,
+    pub data_coverage_note: Option<String>,
+}
+
+/// Request body for ownership.trace.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnershipRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_depth: Option<i32>,
+}
+
+/// A company entity in an ownership chain.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnershipEntity {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub name: String,
+    pub canton: Option<String>,
+    pub status: Option<String>,
+    pub legal_form: Option<String>,
+    pub share_capital: Option<f64>,
+}
+
+/// A single directional relationship in an ownership chain.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnershipLink {
+    #[serde(default)]
+    pub source_uid: String,
+    #[serde(default)]
+    pub source_name: String,
+    #[serde(default)]
+    pub target_uid: String,
+    #[serde(default)]
+    pub target_name: String,
+    #[serde(default)]
+    pub relationship_type: String,
+    #[serde(default)]
+    pub depth: i32,
+}
+
+/// A person's role at a specific company in an ownership chain.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonCompanyRole {
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub role: String,
+}
+
+/// A person with significant roles across the ownership chain.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeyPerson {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub companies: Vec<PersonCompanyRole>,
+}
+
+/// A detected circular ownership pattern.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CircularFlag {
+    #[serde(default)]
+    pub loop_uids: Vec<String>,
+    #[serde(default)]
+    pub description: String,
+}
+
+/// Full ownership trace response from `POST /ownership/{uid}`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OwnershipResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub ownership_chain: Vec<OwnershipLink>,
+    pub ultimate_parent: Option<OwnershipEntity>,
+    #[serde(default)]
+    pub key_persons: Vec<KeyPerson>,
+    #[serde(default)]
+    pub circular_flags: Vec<CircularFlag>,
+    #[serde(default)]
+    pub risk_level: String,
+    #[serde(default)]
+    pub assessed_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Media (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// A media/news item with optional sentiment analysis.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaItem {
+    pub id: String,
+    #[serde(default)]
+    pub title: String,
+    pub summary: Option<String>,
+    pub source: Option<String>,
+    pub published_at: Option<String>,
+    pub url: Option<String>,
+    pub sentiment_score: Option<f32>,
+    pub sentiment_label: Option<String>,
+    pub topics: Option<Vec<String>>,
+    pub risk_relevance: Option<f32>,
+}
+
+/// Response containing a list of media items.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaResponse {
+    #[serde(default)]
+    pub items: Vec<MediaItem>,
+    #[serde(default)]
+    pub total: i64,
+}
+
+/// Query parameters for `companies.media()`.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct MediaParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sentiment: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub since: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i64>,
+}
+
+/// Response from triggering LLM sentiment analysis on media items.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaAnalysisResponse {
+    #[serde(default)]
+    pub analyzed_count: i32,
+    #[serde(default)]
+    pub message: String,
+}
+
+// ---------------------------------------------------------------------------
+// Alerts (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// A saved alert that triggers on matching query results.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Alert {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub query_params: serde_json::Value,
+    pub webhook_url: Option<String>,
+    #[serde(default)]
+    pub frequency: String,
+    #[serde(default)]
+    pub is_active: bool,
+    pub saved_search_id: Option<String>,
+    pub last_triggered_at: Option<String>,
+    pub last_result_count: Option<i32>,
+    #[serde(default)]
+    pub trigger_count: i32,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+}
+
+/// Request body for creating an alert.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateAlertRequest {
+    pub name: String,
+    pub query_params: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub webhook_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub frequency: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub saved_search_id: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Analytics — flows, migrations, benchmark (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// A single period of company registration/dissolution flow.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlowDataPoint {
+    #[serde(default)]
+    pub period: String,
+    #[serde(default)]
+    pub group: String,
+    #[serde(default)]
+    pub registrations: i64,
+    #[serde(default)]
+    pub dissolutions: i64,
+    #[serde(default)]
+    pub net: i64,
+}
+
+/// Market flow analytics response.
+///
+/// `data_coverage_note` surfaces known asymmetries (e.g. dissolution detection
+/// started later than registration detection).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlowsResponse {
+    #[serde(default)]
+    pub flows: Vec<FlowDataPoint>,
+    pub data_coverage_note: Option<String>,
+}
+
+/// Query parameters for `analytics.flows()`.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct FlowsParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub period: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub since: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "groupBy")]
+    pub group_by: Option<String>,
+}
+
+/// A single canton-to-canton migration flow.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MigrationFlow {
+    #[serde(default)]
+    pub from_canton: String,
+    #[serde(default)]
+    pub to_canton: String,
+    #[serde(default)]
+    pub count: i64,
+}
+
+/// Canton migration analytics response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MigrationResponse {
+    #[serde(default)]
+    pub flows: Vec<MigrationFlow>,
+    #[serde(default)]
+    pub top_flows: Vec<MigrationFlow>,
+}
+
+/// A single benchmarking dimension.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BenchmarkDimension {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub company_value: f64,
+    #[serde(default)]
+    pub industry_median: f64,
+    #[serde(default)]
+    pub percentile: f64,
+}
+
+/// Industry benchmarking response — how a company compares to peers.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BenchmarkResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    pub industry: Option<String>,
+    #[serde(default)]
+    pub peer_count: i64,
+    #[serde(default)]
+    pub dimensions: Vec<BenchmarkDimension>,
+}
+
+/// Query parameters for `analytics.benchmark()`.
+#[derive(Debug, Clone, Serialize)]
+pub struct BenchmarkParams {
+    pub uid: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dimensions: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Batch screening & batch risk scoring (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// Batch screening request body (up to 100 UIDs).
+#[derive(Debug, Clone, Serialize)]
+pub struct BatchScreeningRequest {
+    pub uids: Vec<String>,
+}
+
+/// A summary of a single screening hit within a batch result.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchScreeningHitSummary {
+    #[serde(default)]
+    pub source: String,
+    #[serde(default)]
+    pub matched_name: String,
+    #[serde(default)]
+    pub score: f64,
+}
+
+/// Screening result for a single company in a batch request.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchScreeningResultByUid {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub risk_level: String,
+    #[serde(default)]
+    pub total_hits: i32,
+    #[serde(default)]
+    pub sources_checked: Vec<String>,
+    #[serde(default)]
+    pub hits: Vec<BatchScreeningHitSummary>,
+}
+
+/// Response from a batch screening request.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchScreeningResponse {
+    #[serde(default)]
+    pub results: Vec<BatchScreeningResultByUid>,
+}
+
+/// Batch risk-score request body (up to 50 UIDs).
+#[derive(Debug, Clone, Serialize)]
+pub struct BatchRiskScoreRequest {
+    pub uids: Vec<String>,
+}
+
+/// A summary risk score for a single company in a batch request.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RiskScoreResult {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub overall_score: i32,
+    #[serde(default)]
+    pub risk_level: String,
+}
+
+/// Response from a batch risk scoring request.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchRiskScoreResponse {
+    #[serde(default)]
+    pub results: Vec<RiskScoreResult>,
+}
+
+// ---------------------------------------------------------------------------
+// Person network (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// Summary of a person in a network response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetworkPerson {
+    pub id: String,
+    #[serde(default)]
+    pub full_name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+}
+
+/// A company in a person's network.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetworkCompany {
+    #[serde(default)]
+    pub uid: String,
+    pub name: Option<String>,
+    #[serde(default)]
+    pub role: String,
+    #[serde(default)]
+    pub role_category: String,
+    pub is_current: Option<bool>,
+    pub since: Option<String>,
+    pub until: Option<String>,
+    // Enrichment provenance (v3.1+)
+    pub role_source: Option<String>,
+    pub role_confidence: Option<f32>,
+    pub role_inferred_at: Option<String>,
+}
+
+/// A company shared between a person and a co-director.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoDirectorCompany {
+    #[serde(default)]
+    pub uid: String,
+    pub name: Option<String>,
+}
+
+/// A person who shares company directorships with the primary person.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoDirector {
+    #[serde(default)]
+    pub person_id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub shared_companies: i64,
+    #[serde(default)]
+    pub companies: Vec<CoDirectorCompany>,
+}
+
+/// Aggregate statistics for a person's network.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetworkStats {
+    #[serde(default)]
+    pub total_companies: i64,
+    #[serde(default)]
+    pub active_roles: i64,
+    #[serde(default)]
+    pub co_director_count: i64,
+}
+
+/// Response for a person-centric network view.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PersonNetworkResponse {
+    pub person: NetworkPerson,
+    #[serde(default)]
+    pub companies: Vec<NetworkCompany>,
+    #[serde(default)]
+    pub co_directors: Vec<CoDirector>,
+    pub stats: NetworkStats,
+}
+
+/// Query parameters for `persons.board_members()`.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct BoardMemberParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "pageSize")]
+    pub page_size: Option<i64>,
+}
+
+// ---------------------------------------------------------------------------
+// Enriched watchlist entry (v3.1+)
+// ---------------------------------------------------------------------------
+
+/// An enriched company entry in a watchlist response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchlistCompanyEntry {
+    pub uid: String,
+    pub name: Option<String>,
+    pub status: Option<String>,
+    pub canton: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Clone derives for newly-introduced request types (ergonomics)
+// ---------------------------------------------------------------------------

@@ -31,6 +31,16 @@ impl<'a> Ai<'a> {
             .request_with_body(Method::POST, "/v1/ai/risk-score", req)
             .await
     }
+
+    /// Get AI risk scores for up to 50 companies in a single call.
+    pub async fn risk_score_batch(
+        &self,
+        req: &BatchRiskScoreRequest,
+    ) -> Result<Response<BatchRiskScoreResponse>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/ai/risk-score/batch", req)
+            .await
+    }
 }
 
 #[cfg(test)]

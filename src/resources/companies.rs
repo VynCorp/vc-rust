@@ -238,9 +238,147 @@ impl<'a> Companies<'a> {
         self.client.request(Method::GET, "/v1/tags").await
     }
 
-    // -- Excel export --
+    // -- Timeline (v3.1+) --
 
-    pub async fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+    /// Get a chronological timeline of a company's changes.
+    pub async fn timeline(
+        &self,
+        uid: &str,
+        params: &TimelineParams,
+    ) -> Result<Response<TimelineResponse>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(ref s) = params.since {
+            query.push(("since", s.clone()));
+        }
+        if let Some(ref u) = params.until {
+            query.push(("until", u.clone()));
+        }
+        if let Some(ref c) = params.change_type {
+            query.push(("changeType", c.clone()));
+        }
+        if query.is_empty() {
+            self.client
+                .request(Method::GET, &format!("/v1/companies/{uid}/timeline"))
+                .await
+        } else {
+            self.client
+                .request_with_params(
+                    Method::GET,
+                    &format!("/v1/companies/{uid}/timeline"),
+                    &query,
+                )
+                .await
+        }
+    }
+
+    /// Get an AI-generated narrative summary of a company timeline.
+    pub async fn timeline_summary(
+        &self,
+        uid: &str,
+        params: &TimelineParams,
+    ) -> Result<Response<TimelineSummaryResponse>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(ref s) = params.since {
+            query.push(("since", s.clone()));
+        }
+        if let Some(ref u) = params.until {
+            query.push(("until", u.clone()));
+        }
+        if let Some(ref c) = params.change_type {
+            query.push(("changeType", c.clone()));
+        }
+        if query.is_empty() {
+            self.client
+                .request(
+                    Method::GET,
+                    &format!("/v1/companies/{uid}/timeline/summary"),
+                )
+                .await
+        } else {
+            self.client
+                .request_with_params(
+                    Method::GET,
+                    &format!("/v1/companies/{uid}/timeline/summary"),
+                    &query,
+                )
+                .await
+        }
+    }
+
+    // -- Similar companies (v3.1+) --
+
+    /// Find companies scored by similarity (industry, canton, capital, legal
+    /// form, auditor tier).
+    pub async fn similar(
+        &self,
+        uid: &str,
+        limit: Option<i64>,
+    ) -> Result<Response<SimilarCompaniesResponse>> {
+        if let Some(l) = limit {
+            self.client
+                .request_with_params(
+                    Method::GET,
+                    &format!("/v1/companies/{uid}/similar"),
+                    &[("limit", l.to_string())],
+                )
+                .await
+        } else {
+            self.client
+                .request(Method::GET, &format!("/v1/companies/{uid}/similar"))
+                .await
+        }
+    }
+
+    // -- UBO (v3.1+) --
+
+    /// Resolve the ultimate beneficial owner(s) of a company.
+    pub async fn ubo(&self, uid: &str) -> Result<Response<UboResponse>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/ubo"))
+            .await
+    }
+
+    // -- Media / News with sentiment (v3.1+) --
+
+    /// Get media/news items for a company, optionally filtered by sentiment.
+    ///
+    /// `params.sentiment` is one of `positive`, `neutral`, `negative`.
+    pub async fn media(&self, uid: &str, params: &MediaParams) -> Result<Response<MediaResponse>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(ref s) = params.sentiment {
+            query.push(("sentiment", s.clone()));
+        }
+        if let Some(ref s) = params.since {
+            query.push(("since", s.clone()));
+        }
+        if let Some(l) = params.limit {
+            query.push(("limit", l.to_string()));
+        }
+        if query.is_empty() {
+            self.client
+                .request(Method::GET, &format!("/v1/companies/{uid}/media"))
+                .await
+        } else {
+            self.client
+                .request_with_params(Method::GET, &format!("/v1/companies/{uid}/media"), &query)
+                .await
+        }
+    }
+
+    /// Trigger LLM sentiment analysis on unanalyzed media items for a company.
+    pub async fn media_analyze(&self, uid: &str) -> Result<Response<MediaAnalysisResponse>> {
+        self.client
+            .request(Method::POST, &format!("/v1/companies/{uid}/media/analyze"))
+            .await
+    }
+
+    // -- CSV / Excel export --
+
+    /// Export companies as CSV.
+    ///
+    /// This is the canonical name; [`Self::export_excel`] is kept as a
+    /// deprecated alias. The endpoint currently emits `text/csv`.
+    pub async fn export_csv(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
         let (bytes, meta, content_type, filename) = self
             .client
             .request_bytes_with_body(Method::POST, "/v1/companies/export/excel", req)
@@ -251,6 +389,13 @@ impl<'a> Companies<'a> {
             content_type,
             filename,
         })
+    }
+
+    /// Deprecated: use [`Self::export_csv`] instead. The server returns CSV,
+    /// not Excel.
+    #[deprecated(since = "2.3.0", note = "use `export_csv` instead")]
+    pub async fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+        self.export_csv(req).await
     }
 }
 
@@ -649,7 +794,7 @@ mod tests {
             uids: Some(vec!["CHE-100.023.968".into()]),
             ..Default::default()
         };
-        let file = client.companies().export_excel(&req).await.unwrap();
+        let file = client.companies().export_csv(&req).await.unwrap();
         assert_eq!(file.content_type, "text/csv");
         assert_eq!(file.filename, "export.csv");
         assert!(String::from_utf8_lossy(&file.bytes).contains("Test AG"));

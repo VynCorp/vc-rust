@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-04-12
+
+Alignment release matching the reference Python SDK (`vynco` v3.1.0). Adds the
+full v3.1 API surface: historical timelines, UBO resolution, similar companies,
+media-with-sentiment, person-centric networks, market flow analytics, canton
+migrations, industry benchmarking, batch operations, and saved alerts.
+
+### Added
+
+**2 new resources:**
+
+- **`client.alerts()`** — saved queries with optional webhook delivery (`list`, `create`, `delete`)
+- **`client.ownership()`** — ownership-chain trace with circular-ownership detection (`trace`)
+
+**14 new methods on existing resources:**
+
+- `companies.timeline(uid, &params)` — chronological event timeline
+- `companies.timeline_summary(uid, &params)` — AI-generated narrative summary
+- `companies.similar(uid, limit)` — similar-company scoring on industry/canton/capital/legal form/auditor tier
+- `companies.ubo(uid)` — ultimate beneficial owner resolution
+- `companies.media(uid, &params)` — news items with optional sentiment filter
+- `companies.media_analyze(uid)` — trigger LLM sentiment analysis
+- `companies.export_csv(req)` — canonical CSV export (replaces `export_excel`, kept as deprecated alias)
+- `persons.network(id)` — person-centric network (companies + co-directors + stats)
+- `persons.board_members_paged(uid, &params)` — paginated variant (unpaginated `board_members` unchanged)
+- `analytics.flows(&params)` — registration/dissolution flows over time
+- `analytics.migrations(since)` — canton-to-canton legal-seat migrations
+- `analytics.benchmark(&params)` — company vs industry-peer percentile ranks
+- `screening.batch(req)` — batch sanctions screening (up to 100 UIDs)
+- `ai.risk_score_batch(req)` — batch AI risk scoring (up to 50 UIDs)
+
+**New types (25):**
+
+- `HierarchyEntity` (replaces `serde_json::Value` on `HierarchyResponse.parent/subsidiaries/siblings`)
+- Timeline: `TimelineEvent`, `TimelineResponse`, `TimelineParams`, `TimelineSummaryResponse`
+- Similar: `SimilarCompanyResult`, `SimilarCompaniesResponse`
+- UBO/Ownership: `UboPerson`, `ChainLink`, `UboResponse`, `OwnershipRequest`, `OwnershipEntity`, `OwnershipLink`, `PersonCompanyRole`, `KeyPerson`, `CircularFlag`, `OwnershipResponse`
+- Media: `MediaItem`, `MediaResponse`, `MediaParams`, `MediaAnalysisResponse`
+- Alerts: `Alert`, `CreateAlertRequest`
+- Flows/Migrations/Benchmark: `FlowDataPoint`, `FlowsResponse`, `FlowsParams`, `MigrationFlow`, `MigrationResponse`, `BenchmarkDimension`, `BenchmarkResponse`, `BenchmarkParams`
+- Batch: `BatchScreeningRequest`, `BatchScreeningHitSummary`, `BatchScreeningResultByUid`, `BatchScreeningResponse`, `BatchRiskScoreRequest`, `RiskScoreResult`, `BatchRiskScoreResponse`
+- Person network: `NetworkPerson`, `NetworkCompany`, `CoDirectorCompany`, `CoDirector`, `NetworkStats`, `PersonNetworkResponse`, `BoardMemberParams`
+- Enriched watchlist: `WatchlistCompanyEntry`
+
+**Enrichment provenance fields** (all optional, backwards-compatible — populated
+by new backend pipelines):
+
+- `Company.direct_parent_lei`, `ultimate_parent_lei`, `ultimate_parent_name`, `gleif_parent_enriched_at` — GLEIF parent linkage
+- `Company.industry_source`, `industry_confidence`, `industry_classified_at` — industry-classification provenance
+- `Classification.industry_source`, `industry_confidence` — same on the classification endpoint
+- `Fingerprint.registration_date` — Swiss register entry date
+- `BoardMember.role_source`, `role_confidence`, `role_inferred_at` — role extraction provenance
+- `PersonRoleDetail`, `PersonEntry`, `NetworkCompany` — same role provenance fields
+
+**Data-coverage disclosure:**
+
+- `UboResponse.data_coverage_note` — human-readable explanation when chain is incomplete
+- `FlowsResponse.data_coverage_note` — surfaces asymmetric-accuracy notes (e.g. historical dissolution under-counting)
+
+**Documentation:**
+
+- Non-Swiss GLEIF parents appear as synthetic `LEI:<20-char-lei>` identifiers on
+  `UboPerson.controlling_entity_uid`, `ChainLink.from_uid`/`to_uid`, and
+  `OwnershipLink.source_uid`/`target_uid`. Documented on each struct.
+
+### Changed
+
+- `HierarchyResponse.parent`/`subsidiaries`/`siblings` now use the typed `HierarchyEntity` struct instead of `serde_json::Value` — this is a typed-output improvement; callers that read through the values via `.get("name")` style access must switch to field access (e.g. `entity.name`).
+- `WatchlistCompaniesResponse` now includes a typed `companies: Vec<WatchlistCompanyEntry>` field alongside the existing `uids`. The server populates it with name/status/canton for each watched company (eliminates the need for an extra round trip to resolve UIDs).
+
+### Deprecated
+
+- `companies.export_excel(req)` — kept as a deprecated wrapper around `export_csv` (the endpoint has always returned CSV; the new name reflects reality). Emits a `#[deprecated]` warning. Will be removed in 3.0.
+
 ## [2.2.0] - 2026-04-08
 
 Production-ready release with full API coverage and live-verified e2e tests.

@@ -167,6 +167,14 @@ impl Client {
         Graph::new(self)
     }
 
+    pub fn alerts(&self) -> Alerts<'_> {
+        Alerts::new(self)
+    }
+
+    pub fn ownership(&self) -> Ownership<'_> {
+        Ownership::new(self)
+    }
+
     // -- Internal request methods --------------------------------------------
 
     pub(crate) fn url(&self, path: &str) -> String {

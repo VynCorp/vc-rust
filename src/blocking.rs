@@ -305,9 +305,14 @@ impl Companies<'_> {
             .block_on(self.client.inner.companies().all_tags())
     }
 
-    pub fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+    pub fn export_csv(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
         self.client
-            .block_on(self.client.inner.companies().export_excel(req))
+            .block_on(self.client.inner.companies().export_csv(req))
+    }
+
+    #[deprecated(since = "2.3.0", note = "use `export_csv` instead")]
+    pub fn export_excel(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
+        self.export_csv(req)
     }
 }
 
