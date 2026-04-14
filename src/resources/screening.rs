@@ -3,9 +3,7 @@ use reqwest::Method;
 use crate::client::Client;
 use crate::error::Result;
 use crate::response::Response;
-use crate::types::{
-    BatchScreeningRequest, BatchScreeningResponse, ScreeningRequest, ScreeningResponse,
-};
+use crate::types::*;
 
 pub struct Screening<'a> {
     client: &'a Client,
@@ -30,6 +28,36 @@ impl<'a> Screening<'a> {
         self.client
             .request_with_body(Method::POST, "/v1/screening/batch", req)
             .await
+    }
+
+    /// Browse SECO/OpenSanctions/FINMA sanctions databases with search and pagination.
+    pub async fn browse_sanctions(
+        &self,
+        params: &SanctionsSearchParams,
+    ) -> Result<Response<SanctionsListResponse>> {
+        let mut query: Vec<(&str, String)> = Vec::new();
+        if let Some(ref s) = params.search {
+            query.push(("search", s.clone()));
+        }
+        if let Some(ref et) = params.entity_type {
+            query.push(("entityType", et.clone()));
+        }
+        if let Some(ref p) = params.program {
+            query.push(("program", p.clone()));
+        }
+        if let Some(p) = params.page {
+            query.push(("page", p.to_string()));
+        }
+        if let Some(ps) = params.page_size {
+            query.push(("pageSize", ps.to_string()));
+        }
+        if query.is_empty() {
+            self.client.request(Method::GET, "/v1/sanctions").await
+        } else {
+            self.client
+                .request_with_params(Method::GET, "/v1/sanctions", &query)
+                .await
+        }
     }
 }
 

@@ -372,6 +372,15 @@ impl<'a> Companies<'a> {
             .await
     }
 
+    // -- PDF profile --
+
+    /// Get structured company profile data suitable for PDF rendering.
+    pub async fn pdf(&self, uid: &str) -> Result<Response<PdfProfileResponse>> {
+        self.client
+            .request(Method::GET, &format!("/v1/companies/{uid}/pdf"))
+            .await
+    }
+
     // -- CSV / Excel export --
 
     /// Export companies as CSV.

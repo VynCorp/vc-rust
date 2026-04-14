@@ -161,6 +161,18 @@ impl Client {
     pub fn graph(&self) -> Graph<'_> {
         Graph { client: self }
     }
+
+    pub fn reports(&self) -> Reports<'_> {
+        Reports { client: self }
+    }
+
+    pub fn pipelines(&self) -> Pipelines<'_> {
+        Pipelines { client: self }
+    }
+
+    pub fn saved_searches(&self) -> SavedSearches<'_> {
+        SavedSearches { client: self }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -305,6 +317,10 @@ impl Companies<'_> {
             .block_on(self.client.inner.companies().all_tags())
     }
 
+    pub fn pdf(&self, uid: &str) -> Result<Response<PdfProfileResponse>> {
+        self.client.block_on(self.client.inner.companies().pdf(uid))
+    }
+
     pub fn export_csv(&self, req: &ExcelExportRequest) -> Result<ExportFile> {
         self.client
             .block_on(self.client.inner.companies().export_csv(req))
@@ -353,6 +369,19 @@ impl Screening<'_> {
     pub fn screen(&self, req: &ScreeningRequest) -> Result<Response<ScreeningResponse>> {
         self.client
             .block_on(self.client.inner.screening().screen(req))
+    }
+
+    pub fn batch(&self, req: &BatchScreeningRequest) -> Result<Response<BatchScreeningResponse>> {
+        self.client
+            .block_on(self.client.inner.screening().batch(req))
+    }
+
+    pub fn browse_sanctions(
+        &self,
+        params: &SanctionsSearchParams,
+    ) -> Result<Response<SanctionsListResponse>> {
+        self.client
+            .block_on(self.client.inner.screening().browse_sanctions(params))
     }
 }
 
@@ -477,6 +506,28 @@ impl Ai<'_> {
 
     pub fn risk_score(&self, req: &RiskScoreRequest) -> Result<Response<RiskScoreResponse>> {
         self.client.block_on(self.client.inner.ai().risk_score(req))
+    }
+
+    pub fn risk_score_batch(
+        &self,
+        req: &BatchRiskScoreRequest,
+    ) -> Result<Response<BatchRiskScoreResponse>> {
+        self.client
+            .block_on(self.client.inner.ai().risk_score_batch(req))
+    }
+
+    pub fn comparative(&self, req: &ComparativeRequest) -> Result<Response<ComparativeResponse>> {
+        self.client
+            .block_on(self.client.inner.ai().comparative(req))
+    }
+
+    pub fn predictive_risk(
+        &self,
+        uid: &str,
+        req: &PredictiveRiskRequest,
+    ) -> Result<Response<PredictiveRiskResponse>> {
+        self.client
+            .block_on(self.client.inner.ai().predictive_risk(uid, req))
     }
 }
 
@@ -612,6 +663,10 @@ impl Changes<'_> {
         self.client
             .block_on(self.client.inner.changes().statistics())
     }
+
+    pub fn review(&self, id: &str) -> Result<ResponseMeta> {
+        self.client.block_on(self.client.inner.changes().review(id))
+    }
 }
 
 pub struct Persons<'a> {
@@ -730,5 +785,114 @@ impl Graph<'_> {
         req: &NetworkAnalysisRequest,
     ) -> Result<Response<NetworkAnalysisResponse>> {
         self.client.block_on(self.client.inner.graph().analyze(req))
+    }
+}
+
+pub struct Reports<'a> {
+    client: &'a Client,
+}
+
+impl Reports<'_> {
+    pub fn industries(&self) -> Result<Response<IndustryListResponse>> {
+        self.client
+            .block_on(self.client.inner.reports().industries())
+    }
+
+    pub fn get(&self, industry: &str) -> Result<Response<IndustryReportResponse>> {
+        self.client
+            .block_on(self.client.inner.reports().get(industry))
+    }
+
+    pub fn generate(&self, industry: &str) -> Result<Response<GeneratedIndustryReport>> {
+        self.client
+            .block_on(self.client.inner.reports().generate(industry))
+    }
+}
+
+pub struct Pipelines<'a> {
+    client: &'a Client,
+}
+
+impl Pipelines<'_> {
+    pub fn list(&self) -> Result<Response<Vec<Pipeline>>> {
+        self.client.block_on(self.client.inner.pipelines().list())
+    }
+
+    pub fn create(&self, req: &CreatePipelineRequest) -> Result<Response<Pipeline>> {
+        self.client
+            .block_on(self.client.inner.pipelines().create(req))
+    }
+
+    pub fn get(&self, id: &str) -> Result<Response<PipelineWithEntries>> {
+        self.client.block_on(self.client.inner.pipelines().get(id))
+    }
+
+    pub fn delete(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.pipelines().delete(id))
+    }
+
+    pub fn add_entry(&self, id: &str, req: &AddEntryRequest) -> Result<Response<PipelineEntry>> {
+        self.client
+            .block_on(self.client.inner.pipelines().add_entry(id, req))
+    }
+
+    pub fn update_entry(
+        &self,
+        id: &str,
+        entry_id: &str,
+        req: &UpdateEntryRequest,
+    ) -> Result<Response<PipelineEntry>> {
+        self.client.block_on(
+            self.client
+                .inner
+                .pipelines()
+                .update_entry(id, entry_id, req),
+        )
+    }
+
+    pub fn remove_entry(&self, id: &str, entry_id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.pipelines().remove_entry(id, entry_id))
+    }
+
+    pub fn stats(&self, id: &str) -> Result<Response<PipelineStats>> {
+        self.client
+            .block_on(self.client.inner.pipelines().stats(id))
+    }
+}
+
+pub struct SavedSearches<'a> {
+    client: &'a Client,
+}
+
+impl SavedSearches<'_> {
+    pub fn list(&self) -> Result<Response<Vec<SavedSearch>>> {
+        self.client
+            .block_on(self.client.inner.saved_searches().list())
+    }
+
+    pub fn create(&self, req: &CreateSavedSearchRequest) -> Result<Response<SavedSearch>> {
+        self.client
+            .block_on(self.client.inner.saved_searches().create(req))
+    }
+
+    pub fn get(&self, id: &str) -> Result<Response<SavedSearch>> {
+        self.client
+            .block_on(self.client.inner.saved_searches().get(id))
+    }
+
+    pub fn update(
+        &self,
+        id: &str,
+        req: &UpdateSavedSearchRequest,
+    ) -> Result<Response<SavedSearch>> {
+        self.client
+            .block_on(self.client.inner.saved_searches().update(id, req))
+    }
+
+    pub fn delete(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .block_on(self.client.inner.saved_searches().delete(id))
     }
 }

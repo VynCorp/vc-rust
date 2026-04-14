@@ -2,7 +2,7 @@ use reqwest::Method;
 
 use crate::client::Client;
 use crate::error::Result;
-use crate::response::Response;
+use crate::response::{Response, ResponseMeta};
 use crate::types::*;
 
 pub struct Changes<'a> {
@@ -55,6 +55,13 @@ impl<'a> Changes<'a> {
     pub async fn statistics(&self) -> Result<Response<ChangeStatistics>> {
         self.client
             .request(Method::GET, "/v1/changes/statistics")
+            .await
+    }
+
+    /// Mark a change as reviewed (compliance workflow).
+    pub async fn review(&self, id: &str) -> Result<ResponseMeta> {
+        self.client
+            .request_empty(Method::PUT, &format!("/v1/changes/{id}/review"))
             .await
     }
 }

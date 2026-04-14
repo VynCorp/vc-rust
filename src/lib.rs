@@ -12,8 +12,8 @@ pub use client::{Client, ClientBuilder};
 pub use error::{ErrorBody, VyncoError};
 pub use resources::{
     Ai, Alerts, Analytics, ApiKeys, Auditors, Billing, Changes, Companies, Credits, Dashboard,
-    Dossiers, ExportFile, Exports, Graph, Health, Ownership, Persons, Screening, Teams, Watchlists,
-    Webhooks,
+    Dossiers, ExportFile, Exports, Graph, Health, Ownership, Persons, Pipelines, Reports,
+    SavedSearches, Screening, Teams, Watchlists, Webhooks,
 };
 pub use response::{Response, ResponseMeta};
 pub use types::*;

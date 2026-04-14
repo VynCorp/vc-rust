@@ -41,6 +41,29 @@ impl<'a> Ai<'a> {
             .request_with_body(Method::POST, "/v1/ai/risk-score/batch", req)
             .await
     }
+
+    /// Generate an AI comparative dossier for 2-5 companies.
+    ///
+    /// `focus` is one of `governance`, `financial`, `risk`, or `all` (default).
+    pub async fn comparative(
+        &self,
+        req: &ComparativeRequest,
+    ) -> Result<Response<ComparativeResponse>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/ai/comparative", req)
+            .await
+    }
+
+    /// Get predictive risk scoring with dissolution probability.
+    pub async fn predictive_risk(
+        &self,
+        uid: &str,
+        req: &PredictiveRiskRequest,
+    ) -> Result<Response<PredictiveRiskResponse>> {
+        self.client
+            .request_with_body(Method::POST, &format!("/v1/risk/predictive/{uid}"), req)
+            .await
+    }
 }
 
 #[cfg(test)]

@@ -175,6 +175,18 @@ impl Client {
         Ownership::new(self)
     }
 
+    pub fn reports(&self) -> Reports<'_> {
+        Reports::new(self)
+    }
+
+    pub fn pipelines(&self) -> Pipelines<'_> {
+        Pipelines::new(self)
+    }
+
+    pub fn saved_searches(&self) -> SavedSearches<'_> {
+        SavedSearches::new(self)
+    }
+
     // -- Internal request methods --------------------------------------------
 
     pub(crate) fn url(&self, path: &str) -> String {

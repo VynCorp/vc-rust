@@ -2435,5 +2435,643 @@ pub struct WatchlistCompanyEntry {
 }
 
 // ---------------------------------------------------------------------------
+// Comparative AI
+// ---------------------------------------------------------------------------
+
+/// Request body for the AI comparative dossier endpoint.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ComparativeRequest {
+    pub uids: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub focus: Option<String>,
+}
+
+/// A company-role entry within a board overlap.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OverlapCompanyRole {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub role: String,
+}
+
+/// A board member appearing in multiple compared companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BoardOverlap {
+    #[serde(default)]
+    pub person_name: String,
+    #[serde(default)]
+    pub companies: Vec<OverlapCompanyRole>,
+}
+
+/// An auditor serving one or more compared companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompAuditorEntry {
+    #[serde(default)]
+    pub auditor_name: String,
+    #[serde(default)]
+    pub company_count: i64,
+    #[serde(default)]
+    pub company_uids: Vec<String>,
+    #[serde(default)]
+    pub group_share: f64,
+}
+
+/// Auditor analysis across compared companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuditorAnalysis {
+    #[serde(default)]
+    pub auditor_distribution: Vec<CompAuditorEntry>,
+    #[serde(default)]
+    pub unique_auditor_count: i64,
+    #[serde(default)]
+    pub concentration_flag: bool,
+}
+
+/// A single governance score factor.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GovernanceFactor {
+    #[serde(default)]
+    pub factor: String,
+    #[serde(default)]
+    pub score: i64,
+    #[serde(default)]
+    pub description: String,
+}
+
+/// Per-company governance score.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GovernanceScore {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub score: i64,
+    #[serde(default)]
+    pub factors: Vec<GovernanceFactor>,
+}
+
+/// AI-generated comparative dossier for multiple companies.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ComparativeResponse {
+    #[serde(default)]
+    pub uids: Vec<String>,
+    #[serde(default)]
+    pub focus: String,
+    #[serde(default)]
+    pub report: String,
+    #[serde(default)]
+    pub board_overlaps: Vec<BoardOverlap>,
+    #[serde(default)]
+    pub auditor_analysis: Option<AuditorAnalysis>,
+    #[serde(default)]
+    pub governance_scores: Vec<GovernanceScore>,
+    #[serde(default)]
+    pub generated_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Predictive Risk
+// ---------------------------------------------------------------------------
+
+/// Request body for the predictive risk scoring endpoint.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictiveRiskRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lookback_days: Option<i64>,
+}
+
+/// A pre-dissolution risk indicator.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictiveRiskIndicator {
+    #[serde(default)]
+    pub signal: String,
+    #[serde(default)]
+    pub triggered: bool,
+    #[serde(default)]
+    pub weight: f64,
+    #[serde(default)]
+    pub contribution: f64,
+    #[serde(default)]
+    pub severity: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+/// Predictive risk scoring response with dissolution probability.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictiveRiskResponse {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub dissolution_probability: f64,
+    #[serde(default)]
+    pub risk_level: String,
+    #[serde(default)]
+    pub pre_dissolution_indicators: Vec<PredictiveRiskIndicator>,
+    #[serde(default)]
+    pub credit_risk_score: i64,
+    #[serde(default)]
+    pub recommendation: String,
+    #[serde(default)]
+    pub assessed_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// PDF Profile
+// ---------------------------------------------------------------------------
+
+/// A board member entry in a PDF profile response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfBoardMember {
+    #[serde(default)]
+    pub first_name: Option<String>,
+    #[serde(default)]
+    pub last_name: Option<String>,
+    #[serde(default)]
+    pub role: String,
+    #[serde(default)]
+    pub signing_authority: Option<String>,
+    #[serde(default)]
+    pub since: Option<String>,
+    #[serde(default)]
+    pub until: Option<String>,
+}
+
+/// A company event in a PDF profile response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfEvent {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub category: String,
+    #[serde(default)]
+    pub summary: String,
+    #[serde(default)]
+    pub severity: String,
+    #[serde(default)]
+    pub detected_at: String,
+    #[serde(default)]
+    pub source_date: Option<String>,
+}
+
+/// An auditor tenure entry in a PDF profile response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfAuditorTenure {
+    #[serde(default)]
+    pub auditor_name: String,
+    #[serde(default)]
+    pub appointed_at: Option<String>,
+    #[serde(default)]
+    pub resigned_at: Option<String>,
+    #[serde(default)]
+    pub tenure_years: Option<f64>,
+    #[serde(default)]
+    pub is_current: bool,
+}
+
+/// Core company data within a PDF profile response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfCompanyData {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub canton: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub legal_form: Option<String>,
+    #[serde(default)]
+    pub share_capital: Option<f64>,
+    #[serde(default)]
+    pub currency: Option<String>,
+    #[serde(default)]
+    pub purpose: Option<String>,
+    #[serde(default)]
+    pub founding_date: Option<String>,
+    #[serde(default)]
+    pub registration_date: Option<String>,
+    #[serde(default)]
+    pub legal_seat: Option<String>,
+    #[serde(default)]
+    pub municipality: Option<String>,
+    #[serde(default)]
+    pub address_street: Option<String>,
+    #[serde(default)]
+    pub address_house_number: Option<String>,
+    #[serde(default)]
+    pub address_zip_code: Option<String>,
+    #[serde(default)]
+    pub address_city: Option<String>,
+    #[serde(default)]
+    pub website: Option<String>,
+    #[serde(default)]
+    pub industry: Option<String>,
+    #[serde(default)]
+    pub sub_industry: Option<String>,
+    #[serde(default)]
+    pub employee_count: Option<i32>,
+    #[serde(default)]
+    pub auditor_name: Option<String>,
+    #[serde(default)]
+    pub auditor_category: Option<String>,
+    #[serde(default)]
+    pub sanctions_hit: Option<bool>,
+    #[serde(default)]
+    pub is_finma_regulated: Option<bool>,
+    #[serde(default)]
+    pub old_names: Option<Vec<String>>,
+    #[serde(default)]
+    pub translations: Option<Vec<String>>,
+}
+
+/// Structured company profile data suitable for PDF rendering.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfProfileResponse {
+    pub company: PdfCompanyData,
+    #[serde(default)]
+    pub board_members: Vec<PdfBoardMember>,
+    #[serde(default)]
+    pub recent_events: Vec<PdfEvent>,
+    #[serde(default)]
+    pub auditor_history: Vec<PdfAuditorTenure>,
+    #[serde(default)]
+    pub generated_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Reports (Industry)
+// ---------------------------------------------------------------------------
+
+/// Summary of an industry with company count.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndustrySummary {
+    #[serde(default)]
+    pub industry: String,
+    #[serde(default)]
+    pub company_count: i64,
+}
+
+/// List of available industries.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndustryListResponse {
+    #[serde(default)]
+    pub industries: Vec<IndustrySummary>,
+    #[serde(default)]
+    pub total: i64,
+}
+
+/// A company entry within an industry report.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndustryCompanyEntry {
+    #[serde(default)]
+    pub uid: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub canton: Option<String>,
+    #[serde(default)]
+    pub share_capital: Option<f64>,
+    #[serde(default)]
+    pub status: Option<String>,
+}
+
+/// Canton distribution entry in a report.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReportCantonCount {
+    #[serde(default)]
+    pub canton: String,
+    #[serde(default)]
+    pub count: i64,
+}
+
+/// Auditor concentration entry in a report.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReportAuditorCount {
+    #[serde(default)]
+    pub auditor_name: String,
+    #[serde(default)]
+    pub count: i64,
+}
+
+/// Status distribution entry.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StatusCount {
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub count: i64,
+}
+
+/// Detailed industry report with analytics.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndustryReportResponse {
+    #[serde(default)]
+    pub industry: String,
+    #[serde(default)]
+    pub company_count: i64,
+    #[serde(default)]
+    pub avg_capital: Option<f64>,
+    #[serde(default)]
+    pub median_capital: Option<f64>,
+    #[serde(default)]
+    pub top_companies: Vec<IndustryCompanyEntry>,
+    #[serde(default)]
+    pub canton_distribution: Vec<ReportCantonCount>,
+    #[serde(default)]
+    pub recent_changes: i64,
+    #[serde(default)]
+    pub auditor_concentration: Vec<ReportAuditorCount>,
+    #[serde(default)]
+    pub status_distribution: Vec<StatusCount>,
+    #[serde(default)]
+    pub generated_at: String,
+}
+
+/// AI-generated industry narrative report.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneratedIndustryReport {
+    #[serde(default)]
+    pub industry: String,
+    #[serde(default)]
+    pub report: String,
+    #[serde(default)]
+    pub sources: Vec<String>,
+    #[serde(default)]
+    pub generated_at: String,
+}
+
+// ---------------------------------------------------------------------------
+// Sanctions
+// ---------------------------------------------------------------------------
+
+/// Query parameters for browsing the sanctions database.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SanctionsSearchParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub program: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "pageSize")]
+    pub page_size: Option<i64>,
+}
+
+/// A single sanctions list entry.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SanctionEntry {
+    #[serde(default)]
+    pub seco_id: String,
+    #[serde(default)]
+    pub entity_type: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub aliases: Vec<String>,
+    #[serde(default)]
+    pub nationality: Option<String>,
+    #[serde(default)]
+    pub date_of_birth: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub program: String,
+    #[serde(default)]
+    pub listed_since: Option<String>,
+    #[serde(default)]
+    pub source_url: String,
+}
+
+/// Paginated sanctions browse response.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SanctionsListResponse {
+    #[serde(default)]
+    pub items: Vec<SanctionEntry>,
+    #[serde(default)]
+    pub total: i64,
+    #[serde(default)]
+    pub page: i64,
+    #[serde(default)]
+    pub page_size: i64,
+}
+
+// ---------------------------------------------------------------------------
+// Pipelines
+// ---------------------------------------------------------------------------
+
+/// A sales/tracking pipeline.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Pipeline {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub team_id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub stages: Vec<String>,
+    #[serde(default)]
+    pub created_at: i64,
+}
+
+/// An entry (company) within a pipeline stage.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PipelineEntry {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub pipeline_id: String,
+    #[serde(default)]
+    pub company_uid: String,
+    #[serde(default)]
+    pub company_name: String,
+    #[serde(default)]
+    pub canton: Option<String>,
+    #[serde(default)]
+    pub stage: String,
+    #[serde(default)]
+    pub assigned_to_user_id: Option<String>,
+    #[serde(default)]
+    pub assigned_to_name: Option<String>,
+    #[serde(default)]
+    pub tier: i64,
+    #[serde(default)]
+    pub score: Option<f64>,
+    #[serde(default)]
+    pub notes: Option<String>,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub updated_at: i64,
+}
+
+/// A pipeline with its entries loaded.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PipelineWithEntries {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub team_id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub stages: Vec<String>,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub entries: Vec<PipelineEntry>,
+    #[serde(default)]
+    pub total_entries: i64,
+}
+
+/// Aggregate statistics for a pipeline.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PipelineStats {
+    #[serde(default)]
+    pub by_stage: HashMap<String, i64>,
+    #[serde(default)]
+    pub by_tier: HashMap<String, i64>,
+    #[serde(default)]
+    pub total: i64,
+}
+
+/// Request body for creating a pipeline.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatePipelineRequest {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stages: Option<Vec<String>>,
+}
+
+/// Request body for adding an entry to a pipeline.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddEntryRequest {
+    pub company_uid: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assigned_to_user_id: Option<String>,
+}
+
+/// Request body for updating a pipeline entry.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateEntryRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub assigned_to_user_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Saved Searches
+// ---------------------------------------------------------------------------
+
+/// A saved search query that can be scheduled or linked to alerts.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedSearch {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub search_params: Option<serde_json::Value>,
+    #[serde(default)]
+    pub is_scheduled: bool,
+    #[serde(default)]
+    pub schedule_frequency: Option<String>,
+    #[serde(default)]
+    pub last_run_at: Option<String>,
+    #[serde(default)]
+    pub last_result_count: Option<i64>,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+}
+
+/// Request body for creating a saved search.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSavedSearchRequest {
+    pub name: String,
+    pub search_params: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub is_scheduled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schedule_frequency: Option<String>,
+}
+
+/// Request body for updating a saved search.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSavedSearchRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_params: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_scheduled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schedule_frequency: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
 // Clone derives for newly-introduced request types (ergonomics)
 // ---------------------------------------------------------------------------
