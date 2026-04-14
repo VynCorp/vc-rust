@@ -2224,12 +2224,10 @@ pub struct MigrationResponse {
 pub struct BenchmarkDimension {
     #[serde(default)]
     pub name: String,
-    #[serde(default)]
-    pub company_value: f64,
-    #[serde(default)]
-    pub industry_median: f64,
-    #[serde(default)]
-    pub percentile: f64,
+    pub company_value: Option<f64>,
+    pub industry_median: Option<f64>,
+    pub percentile: Option<f64>,
+    pub peers_with_data: Option<i64>,
 }
 
 /// Industry benchmarking response — how a company compares to peers.
