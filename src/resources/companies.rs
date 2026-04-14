@@ -56,6 +56,15 @@ impl<'a> Companies<'a> {
         if let Some(ps) = params.page_size {
             query.push(("pageSize", ps.to_string()));
         }
+        if let Some(ref l) = params.lei {
+            query.push(("lei", l.clone()));
+        }
+        if let Some(ref d) = params.duns {
+            query.push(("duns", d.clone()));
+        }
+        if let Some(ref i) = params.isin {
+            query.push(("isin", i.clone()));
+        }
         if query.is_empty() {
             self.client.request(Method::GET, "/v1/companies").await
         } else {

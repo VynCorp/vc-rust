@@ -26,6 +26,12 @@ impl<'a> Exports<'a> {
             .await
     }
 
+    pub async fn bulk_profiles(&self, req: &BulkProfilesRequest) -> Result<Response<ExportJob>> {
+        self.client
+            .request_with_body(Method::POST, "/v1/exports/bulk-profiles", req)
+            .await
+    }
+
     pub async fn download(&self, id: &str) -> Result<ExportFile> {
         let (bytes, meta, content_type, filename) = self
             .client

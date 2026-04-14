@@ -137,6 +137,13 @@ pub struct Company {
     pub industry_confidence: Option<f32>,
     #[serde(default)]
     pub industry_classified_at: Option<String>,
+    // External identifiers
+    #[serde(default)]
+    pub lei: Option<String>,
+    #[serde(default)]
+    pub duns: Option<String>,
+    #[serde(default)]
+    pub isin: Option<String>,
 }
 
 /// Query parameters for listing companies.
@@ -166,6 +173,12 @@ pub struct CompanyListParams {
     pub page: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub page_size: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lei: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duns: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub isin: Option<String>,
 }
 
 /// Company count response.
@@ -3070,6 +3083,53 @@ pub struct UpdateSavedSearchRequest {
     pub is_scheduled: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schedule_frequency: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Company Diff
+// ---------------------------------------------------------------------------
+
+/// A single field-level change in a company diff.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiffEntry {
+    pub field: String,
+    #[serde(default)]
+    pub from: Option<String>,
+    #[serde(default)]
+    pub to: Option<String>,
+    #[serde(default)]
+    pub changed_at: String,
+    #[serde(default)]
+    pub change_type: String,
+}
+
+/// Response for a company diff request.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompanyDiffResponse {
+    pub uid: String,
+    pub since: String,
+    pub until: String,
+    #[serde(default)]
+    pub changes: Vec<DiffEntry>,
+    #[serde(default)]
+    pub total_changes: i64,
+}
+
+// ---------------------------------------------------------------------------
+// Bulk Profiles Export
+// ---------------------------------------------------------------------------
+
+/// Request body for bulk profile export.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BulkProfilesRequest {
+    pub uids: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub include_timeline: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub include_board: Option<bool>,
 }
 
 // ---------------------------------------------------------------------------

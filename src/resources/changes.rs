@@ -64,6 +64,22 @@ impl<'a> Changes<'a> {
             .request_empty(Method::PUT, &format!("/v1/changes/{id}/review"))
             .await
     }
+
+    /// Get a field-level diff for a company between two dates.
+    pub async fn diff(
+        &self,
+        uid: &str,
+        since: &str,
+        until: Option<&str>,
+    ) -> Result<Response<CompanyDiffResponse>> {
+        let mut query: Vec<(&str, String)> = vec![("since", since.to_string())];
+        if let Some(u) = until {
+            query.push(("until", u.to_string()));
+        }
+        self.client
+            .request_with_params(Method::GET, &format!("/v1/companies/{uid}/diff"), &query)
+            .await
+    }
 }
 
 #[cfg(test)]

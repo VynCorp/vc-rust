@@ -485,6 +485,11 @@ impl Exports<'_> {
         self.client.block_on(self.client.inner.exports().get(id))
     }
 
+    pub fn bulk_profiles(&self, req: &BulkProfilesRequest) -> Result<Response<ExportJob>> {
+        self.client
+            .block_on(self.client.inner.exports().bulk_profiles(req))
+    }
+
     pub fn download(&self, id: &str) -> Result<ExportFile> {
         self.client
             .block_on(self.client.inner.exports().download(id))
@@ -666,6 +671,16 @@ impl Changes<'_> {
 
     pub fn review(&self, id: &str) -> Result<ResponseMeta> {
         self.client.block_on(self.client.inner.changes().review(id))
+    }
+
+    pub fn diff(
+        &self,
+        uid: &str,
+        since: &str,
+        until: Option<&str>,
+    ) -> Result<Response<CompanyDiffResponse>> {
+        self.client
+            .block_on(self.client.inner.changes().diff(uid, since, until))
     }
 }
 
